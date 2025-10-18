@@ -1,0 +1,7 @@
+name = "MzvHoffmanAlgebra"
+uuid = "c963f718-e780-4a39-abe6-39cbaa8cd120"
+authors = ["Y.K.495 <yuttarikanata@gmail.com>", "いーな"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.12.1"
