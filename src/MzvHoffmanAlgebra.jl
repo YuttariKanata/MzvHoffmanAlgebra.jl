@@ -71,6 +71,6 @@ include("converting.jl")
 include("arithmetic.jl")
 include("hoffman.jl")
 include("accessors.jl")
-include("operator.jl")
+include("operator.jl")  # <- 開発中
 
 end
