@@ -84,6 +84,12 @@ function left_act(op::OpLeft, t::Index)::Index
     return r
 end
 
+left_act(op::OpMinus, w::Word)::Word = w[1+op.cnt:end]
+left_act(op::OpUp, w::Word)::Word    = isone(w) ? word(op.cnt)  : word(w[1]+op.cnt,w[2:end]...)
+left_act(op::OpDown, w::Word)::Word  = isone(w) ? word(-op.cnt) : word(w[1]-op.cnt,w[2:end]...)
+left_act(op::OpLeft, w::Word)::Word  = word(1)^op.cnt * w
+
+
 ############################## right_act ##############################
 function right_act(op::OpMinus, t::Index)::Index
     r = Index()
@@ -125,6 +131,11 @@ function right_act(op::OpRight, t::Index)::Index
     end
     return r
 end
+
+right_act(op::OpMinus, w::Word)::Word = w[1:end-op.cnt]
+right_act(op::OpUp, w::Word)::Word    = isone(w) ? word(op.cnt)  : word(w[1:end-1]..., w[end]+op.cnt)
+right_act(op::OpDown, w::Word)::Word  = isone(w) ? word(-op.cnt) : word(w[1:end-1]..., w[end]-op.cnt)
+right_act(op::OpRight, w::Word)::Word = w * word(1)^op.cnt
 
 ############################## multiplication ##############################
 function *(a::Operator, b::Operator)::Operator
@@ -268,4 +279,29 @@ function *(idx::Index, op::Operator)::Index
     return ridx
 end
 *(idx::Index, op::AbstractOp)::Index = right_act(op,copy(idx))
-*( idx::Index, op::Type{<:AbstractOp})::Index = right_act((op)(1),copy(idx))
+*(idx::Index, op::Type{<:AbstractOp})::Index = right_act((op)(1),copy(idx))
+
+function *(op::Operator, w::Word)::Word
+    rw = w
+    if isone(op)
+        return rw
+    end
+    for i in lastindex(op):-1:1
+        rw = left_act(op.ops[i],rw)
+    end
+    return rw
+end
+*(op::AbstractOp, w::Word)::Word = left_act(op,w)
+*(op::Type{<:AbstractOp}, w::Word)::Word = left_act((op)(1),w)
+function *(w::Word, op::Operator)::Word
+    rw = w
+    if isone(op)
+        return w
+    end
+    for i in 1:lastindex(op)
+        rw = right_act(op.ops[i],rw)
+    end
+    return rw
+end
+*(w::Word, op::AbstractOp)::Word = right_act(op,w)
+*(w::Word, op::Type{<:AbstractOp})::Word = right_act((op)(1),w)

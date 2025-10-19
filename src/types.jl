@@ -131,6 +131,7 @@ const ExprInt = Int
 const NN = Union{Integer,Rational}
 
 # ワード = インデックス列。ハッシュ性と軽さ重視で Tuple に
+# WordのTupleの中身はimmutableなものにしておいてください！！！
 const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
 
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
