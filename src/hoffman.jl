@@ -3,8 +3,8 @@
 # This file defines functions related to monomials
 
 #=
-export monomial_sh, monomial_st, monomial_sh_double, monomial_st_double,
-       shuffle_product, stuffle_product, shuffle_product_double, stuffle_product_double,
+export monomial_sh, monomial_st, monomial_st_star, monomial_sh_double, monomial_st_double, monomial_st_star_double,
+       shuffle_product, stuffle_product, star_stuffle_product, shuffle_product_double, stuffle_product_double,
        shuffle_pow, stuffle_pow, shpw,
        Hoffman_hom, Hoffman_antihom, monomial_sw_w, starword_to_word,
        monomial_dual, dual
@@ -19,6 +19,7 @@ export monomial_sh, monomial_st, monomial_sh_double, monomial_st_double,
 ###################################################################################################
 ############## monomial functions #################################################################
 
+#=
 last_letter(w::Word)::Word = length(w) == 0 ? () : Word(w[end])
 remove_last_letter(w::Word)::Word = w[1:end-1]
 last_lettering(w::Word, g::ExprInt)::Int64 = (ig = findlast(==(g),w)) |> isnothing ? 0 : ig
@@ -53,6 +54,7 @@ end
 function remove_last_letter_v(v::Vector{Int})::Vector{Int}
     return v[1:end-1]
 end
+=#
 
 #last_lettering(v::Idv, g::ExprInt)::Idv = (ig = findlast(==(g),v)) |> isnothing ? 0 : ig
 
@@ -80,7 +82,6 @@ function monomial_sh(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
-
 function monomial_st(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
     lb = lastindex(b)
     la = lastindex(a)
@@ -106,6 +107,22 @@ function monomial_st(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_st_star(a::Vector{Int}, b::Vector{Int})::Tuple{Vector{Vector{Int}}, Vector{Bool}}
+    # 通常の stuffle（符号なし）
+    words = monomial_st(a, b)
+
+    dep_sum = (lastindex(a) + lastindex(b)) & 1
+    n = lastindex(words)
+    signs = Vector{Bool}(undef, n)
+
+    for i in 1:n
+        dep = lastindex(words[i])
+        # 偶奇が同じなら +（false）、異なれば −（true）
+        signs[i] = xor(dep_sum,dep) & 1
+    end
+
+    return words, signs
+end
 
 function monomial_sh_double(a::Vector{Int})::Vector{Vector{Int}}
     la = lastindex(a)
@@ -127,7 +144,6 @@ function monomial_sh_double(a::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
-
 function monomial_st_double(a::Vector{Int})::Vector{Vector{Int}}
     la = lastindex(a)
     h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
@@ -152,6 +168,20 @@ function monomial_st_double(a::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_st_star_double(a::Vector{Int})::Tuple{Vector{Vector{Int}},Vector{Bool}}
+    # 通常の stuffle（符号なし）
+    words = monomial_st_double(a)
+
+    n = lastindex(words)
+    signs = Vector{Bool}(undef, n)
+    
+    for i in 1:n
+        # 偶奇が同じなら +（false）、異なれば −（true）
+        signs[i] = lastindex(words[i]) & 1
+    end
+    
+    return words, signs
+end
 
 
 ###################################################################################################
@@ -168,12 +198,23 @@ function shuffle_product(a::Hoffman, b::Hoffman)::Hoffman
     end
     return s1
 end
-function stuffle_product(a::Index, b::Index)
+function stuffle_product(a::Index, b::Index)::Index
     s1 = Index()
     for (ma,ca) in a.terms
         s2 = Index()
         for (mb,cb) in b.terms
             add!(s2,Index(monomial_st(ma.tovec,mb.tovec)),cb)
+        end
+        add!(s1,s2,ca)
+    end
+    return s1
+end
+function star_stuffle_product(a::Index, b::Index)::Index
+    s1 = Index()
+    for (ma,ca) in a.terms
+        s2 = Index()
+        for (mb,cb) in b.terms
+            add!(s2,Index(monomial_st_star(ma.tovec,mb.tovec)),cb)
         end
         add!(s1,s2,ca)
     end
@@ -226,6 +267,30 @@ function stuffle_product_double(a::Index)::Index
 
     return result
 end
+function star_stuffle_product_double(a::Index)::Index
+    result = Index()
+    pairs = collect(a.terms)
+    n = lastindex(pairs)
+
+    for i in 1:n
+        wi, ci = pairs[i]
+        vi = collect(wi)
+
+        # 自乗項
+        add!(result, Index(monomial_st_star_double(vi)), ci^2)
+
+        # 交差項
+        for j in i+1:n
+            wj, cj = pairs[j]
+            vj = collect(wj)
+
+            add!(result, Index(monomial_st_star(vi, vj)), 2*ci*cj)
+        end
+    end
+
+    return result
+end
+
 # 一般的に早い
 function shuffle_pow(a::Hoffman,n::Int)::Hoffman
     base = deepcopy(a)
@@ -277,6 +342,31 @@ function stuffle_pow(a::Index,n::Int)::Index
     end
     return r
 end
+function star_stuffle_pow(a::Index,n::Int)::Index
+    base = deepcopy(a)
+    r = one(Index)
+
+    if n < 0
+        throw(ArgumentError("stuffle_pow is only defined for nonnegative powers"))
+    elseif n == 0
+        return r
+    elseif n == 1
+        return base
+    end
+    
+    if n&1 == 1
+        r = star_stuffle_product(r,base)
+    end
+    n >>= 1
+    while n>0
+        base = star_stuffle_product_double(base)
+        if n&1 == 1
+            r = star_stuffle_product(r,base)
+        end
+        n>>=1
+    end
+    return r
+end
 # aの項が2項とかの時に速い
 function shpw(a::Hoffman,n::Int)::Hoffman
     r = one(Hoffman)
@@ -292,6 +382,14 @@ function stpw(a::Index,n::Int)::Index
         return r
     else
         return stuffle_product(sp(a,n-1),a)
+    end
+end
+function starstpw(a::Index,n::Int)::Index
+    r = one(Index)
+    if n==0
+        return r
+    else
+        return star_stuffle_product(sp(a,n-1),a)
     end
 end
 

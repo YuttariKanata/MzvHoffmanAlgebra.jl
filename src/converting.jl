@@ -168,13 +168,13 @@ word(w::Word)::Word = w
 
 
 # [============== about Index ==============]
-function Index(c::NN,v::Vector{ExprInt})::Index
+function Index(c::NN,v::Vector{Int})::Index
     idx = Index()
     wv = Word(v)
     idx.terms[wv] = c
     return idx
 end
-function Index(v::Vector{Vector{ExprInt}})::Index
+function Index(v::Vector{Vector{Int}})::Index
     idx = Index()
     c = Rational(BigInt(1))
     for vi in v
@@ -183,6 +183,27 @@ function Index(v::Vector{Vector{ExprInt}})::Index
             idx.terms[wvi] += c
         else
             idx.terms[wvi] = c
+        end
+    end
+    return idx
+end
+function Index(v::Tuple{Vector{Vector{Int}}, Vector{Bool}})::Index
+    idx = Index()
+    c = Rational(BigInt(1))
+    for i in 1:lastindex(v[2])
+        wvi = Word(v[1][i])
+        if haskey(idx.terms,wvi)
+            if v[2][i]
+                idx.terms[wvi] -= c
+            else
+                idx.terms[wvi] += c
+            end
+        else
+            if v[2][i]
+                idx.terms[wvi] = -c
+            else
+                idx.terms[wvi] = c
+            end
         end
     end
     return idx

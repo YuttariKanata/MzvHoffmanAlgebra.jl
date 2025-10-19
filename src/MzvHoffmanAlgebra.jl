@@ -55,8 +55,8 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        # arithmetic.jl
        shift_degree, add!,
        # hoffman.jl
-       monomial_sh, monomial_st, monomial_sh_double, monomial_st_double,
-       shuffle_product, stuffle_product, shuffle_product_double, stuffle_product_double,
+       monomial_sh, monomial_st, monomial_st_star, monomial_sh_double, monomial_st_double, monomial_st_star_double,
+       shuffle_product, stuffle_product, star_stuffle_product, shuffle_product_double, stuffle_product_double,
        shuffle_pow, stuffle_pow, shpw,
        Hoffman_hom, Hoffman_antihom, monomial_sw_w, starword_to_word,
        monomial_dual, dual,
@@ -72,6 +72,6 @@ include("converting.jl")
 include("arithmetic.jl")
 include("hoffman.jl")
 include("accessors.jl")
-include("operator.jl")  # <- 開発中
+include("operator.jl")
 
 end
