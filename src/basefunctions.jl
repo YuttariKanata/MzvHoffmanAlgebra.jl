@@ -1,7 +1,7 @@
 #[ basefunctions.jl ]#
 
 # This file defines the basic functions
-import Base: iszero, isone, zero, one, copy, ==
+import Base: iszero, isone, zero, one, copy, ==, lastindex
 
 #=
 export is_monomial, is_monoindex, is_hoffman, is_index,
@@ -19,10 +19,33 @@ export is_monomial, is_monoindex, is_hoffman, is_index,
 
 
 isone(op::Operator)::Bool = isempty(op.ops)
-isone(op::Ts where Ts<:AbstractOp)::Bool  = true
+isone(op::Ts where Ts<:AbstractOp)::Bool  = (op.cnt == 0)
 one(::Type{Operator})::Operator = Operator()
+one(op::Type{<:AbstractOp})::AbstractOp = (op)(1)
 ==(a::Operator, b::Operator)::Bool = a.ops == b.ops
-
+function ==(a::AbstractOp, b::AbstractOp)::Bool
+    ta = typeof(a)
+    tb = typeof(b)
+    if ta === tb
+        if ta === OpDeriv
+            if a.n == b.n && a.cnt == b.cnt
+                return true
+            end
+        else
+            if a.cnt == b.cnt
+                return true
+            end
+        end
+        return false
+    elseif (ta === OpUp && tb === OpDown) || (ta === OpDown && tb == OpUp)
+        if a.cnt == -b.cnt
+            return true
+        end
+    end
+    return false
+end
+==(a::Operator, b::AbstractOp)::Bool = lastindex(a.ops) == 1 && a.ops[1] == b
+lastindex(op::Operator)::Int = lastindex(op.ops)
 
 ###################################################################################################
 ############## Base Functions #####################################################################
@@ -79,22 +102,12 @@ end
 →^n * -^m
 は n>m なら →^(n-m) n<mなら -^(m-n) n=mなら なし
 =#
-@inline function append_clean2!(op::Operator, vn::Vector{<:AbstractOp})::Operator
+@inline function append_clean!(op::Operator, vn::Vector{<:AbstractOp})::Operator
 
-    
     vnl = lastindex(vn)
     v = Vector{AbstractOp}(undef,vnl)
     for i in 1:vnl
-        x = vn[i]
-        if x isa OpDeriv
-            v[i] = OpDeriv(x.n,x.cnt)
-        elseif x isa OpDown
-            v[i] = OpUp(-x.cnt)
-        elseif x isa OpTau
-            v[i] = OpTau(x.cnt & 1)
-        else
-            v[i] = typeof(x)(x.cnt)
-        end
+        v[i] = copy(vn[i])
     end
 
     # 常に op.ops内のUp,DownはすべてUpに直す
@@ -111,6 +124,8 @@ end
         elseif tvi === OpDeriv
             if vi.n == bef.n
                 op.ops[end].cnt += vi.cnt
+            else
+                push!(op.ops,vi)
             end
         else
             op.ops[end].cnt += vi.cnt
@@ -215,6 +230,19 @@ end
     end
     append!(r.ops,b)
     return r
+end
+# これは正規化も兼ねている copy
+@inline function copy(op::AbstractOp)::AbstractOp
+    top = typeof(op)
+    if top === OpDeriv
+        return OpDeriv(op.n,op.cnt)
+    elseif top === OpDown
+        return OpUp(-op.cnt)
+    elseif top === OpTau
+        return OpTau(op.cnt & 1)
+    else
+        return (top)(op.cnt)
+    end
 end
 
 

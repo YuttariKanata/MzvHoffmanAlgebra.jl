@@ -4,7 +4,8 @@
 
 
 #=
-export left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂
+export left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂,
+       WordtoOperator
 =#
 
 
@@ -125,6 +126,7 @@ function right_act(op::OpRight, t::Index)::Index
     return r
 end
 
+############################## multiplication ##############################
 function *(a::Operator, b::Operator)::Operator
     r = copy(a)
     append_clean!(r,b)
@@ -133,16 +135,7 @@ end
 function *(a::Operator, bn::AbstractOp)::Operator
     r = copy(a)
     rlast = (isempty(r.ops) ? nothing : r.ops[end])
-
-    if bn isa OpDeriv
-        b = OpDeriv(bn.n,bn.cnt)
-    elseif bn isa OpDown
-        b = OpUp(-bn.cnt)
-    elseif bn isa OpTau
-        b = OpTau(bn.cnt & 1)
-    else
-        b = typeof(bn)(bn.cnt)
-    end
+    b = copy(bn)
 
     tb = typeof(b)
     ta = typeof(rlast)
@@ -153,9 +146,11 @@ function *(a::Operator, bn::AbstractOp)::Operator
     elseif ta === OpDeriv
         if b.n == rlast.n
             r.ops[end].cnt += b.cnt
+        else
+            push!(r.ops,b)
         end
     else
-        r.ops[end] += b.cnt
+        r.ops[end].cnt += b.cnt
     end
 
     if !isempty(r.ops) && r.ops[end].cnt == 0
@@ -164,20 +159,42 @@ function *(a::Operator, bn::AbstractOp)::Operator
 
     return r
 end
-function *(a::Operator,bn::Type{<:AbstractOp})::Operator
-    r = copy(a)
-    rlast = (isempty(r.ops) ? nothing : r.ops[end])
+function *(an::AbstractOp, b::Operator)::Operator
+    r = copy(b)
+    rfirst = (isempty(r.ops) ? nothing : r.ops[1])
+    a = copy(an)
 
-    if bn === OpDown
-        b = OpUp
+    ta = typeof(a)
+    tb = typeof(rfirst)
+    if ta !== tb
+        pushfirst!(r.ops,a)
+    elseif ta === OpTau
+        r.ops[1].cnt = xor(a.cnt, rfirst.cnt) & 1
+    elseif ta === OpDeriv
+        if a.n == rfirst.n
+            r.ops[1].cnt += a.cnt
+        else
+            pushfirst!(r.ops,a)
+        end
+    else
+        r.ops[1].cnt += a.cnt
     end
 
-    ta = typeof(rlast)
-    if ta !== b
-        push!(r.ops, one(b))
+    if !isempty(r.ops) && r.ops[1].cnt == 0
+        popfirst!(r.ops)
     end
+
+    return r
 end
+# 一個一個いちいちめんどくさいのでやめる
+*(a::Operator,bn::Type{<:AbstractOp})::Operator            = *(a,(bn)(1))
+*(an::Type{<:AbstractOp},b::Operator)::Operator            = *((an)(1),b)
+*(an::AbstractOp,bn::AbstractOp)::Operator                 = *(Operator(an),bn)
+*(an::AbstractOp,bn::Type{<:AbstractOp})::Operator         = *(Operator(an),bn)
+*(an::Type{<:AbstractOp},bn::AbstractOp)::Operator         = *(an,Operator(bn))
+*(an::Type{<:AbstractOp},bn::Type{<:AbstractOp})::Operator = *(Operator(an),(bn)(1))
 
+############################## powers ##############################
 function ^(op::Type{<:AbstractOp}, n::Integer)::Operator
     if n == 0
         return Operator()
@@ -185,12 +202,70 @@ function ^(op::Type{<:AbstractOp}, n::Integer)::Operator
         return Operator((op)(n))
     end 
 end
+function ^(op::AbstractOp, m::Integer)::Operator
+    r = Operator()
+    t = typeof(op)
+    if t === OpDeriv
+        push!(r.ops,OpDeriv(op.n,op.cnt*m))
+    elseif t === OpDown
+        push!(r.ops,OpUp(-op.cnt*m))
+    else
+        push!(r.ops,t(op.cnt*m))
+    end
+    return r
+end
 function ^(op::Operator, n::Integer)::Operator
     if n < 0
         return throw(DomainError(n, "negative power is not supported"))
     elseif n == 0
         return one(Operator)
+    elseif n == 1
+        return op
     else
         return op * op^(n-1)
     end
 end
+
+###################################################################################################
+############## Operator functions related to word #################################################
+function WordtoOperator(w::Word)::Operator
+    r = Operator()
+    lw = lastindex(w)
+    if w == 0
+        return r
+    end
+    v = Vector{AbstractOp}(undef,lw*2)
+    for i in 1:lw
+        v[2*i-1] = OpRight(1)
+        v[2*i] = OpUp(w[i]-1)
+    end
+    append_clean!(r,v)
+    return r
+end
+
+###################################################################################################
+############## Action function with Index #########################################################
+function *(op::Operator, idx::Index)::Index
+    ridx = copy(idx)
+    if isone(op)
+        return idx
+    end
+    for i in lastindex(op):-1:1
+        ridx = left_act(op.ops[i],ridx)
+    end
+    return ridx
+end
+*(op::AbstractOp, idx::Index)::Index = left_act(op,copy(idx))
+*(op::Type{<:AbstractOp}, idx::Index)::Index = left_act((op)(1),copy(idx))
+function *(idx::Index, op::Operator)::Index
+    ridx = copy(idx)
+    if isone(op)
+        return idx
+    end
+    for i in 1:lastindex(op)
+        ridx = right_act(op.ops[i],ridx)
+    end
+    return ridx
+end
+*(idx::Index, op::AbstractOp)::Index = right_act(op,copy(idx))
+*( idx::Index, op::Type{<:AbstractOp})::Index = right_act((op)(1),copy(idx))

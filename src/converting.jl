@@ -23,6 +23,9 @@ export HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
 
 function Operator(sym::AbstractString, n::Integer=1)::Operator
     op = Operator()
+    if n == 0
+        return op
+    end
     push!(op.ops,str_to_op(sym,n))
     return op
 end
@@ -44,7 +47,10 @@ end
 Operator(op::Operator)::Operator = op
 function Operator(op::AbstractOp)::Operator
     r = Operator()
-    push!(r.ops,op)
+    if op.cnt == 0
+        return r
+    end
+    push!(r.ops,copy(op))
     return r
 end
 function Operator(op::Type{<:AbstractOp})::Operator
@@ -56,12 +62,19 @@ function Operator(op::Type{<:AbstractOp})::Operator
     end
     return r
 end
-function Operator(op::Type{<:AbstractOp},n::Int,k::Int=1)::Operator
+function Operator(op::Type{<:AbstractOp},n::Int,k::Union{Int,Nothing}=nothing)::Operator
     r = Operator()
+    if (n == 0 && k == nothing) || (k == 0)
+        return r
+    end
     if op === OpDown
         push!(r.ops,OpUp(-n))
     elseif op === OpDeriv
-        push!(r.ops,OpDeriv(k,n))
+        if k == nothing
+            push!(r.ops,OpDeriv(1,n))
+        else
+            push!(r.ops,OpDeriv(n,k))
+        end
     else
         push!(r.ops,(op)(n))
     end
@@ -155,7 +168,13 @@ word(w::Word)::Word = w
 
 
 # [============== about Index ==============]
-function Index(v::Vector{Vector{Int}})::Index
+function Index(c::NN,v::Vector{ExprInt})::Index
+    idx = Index()
+    wv = Word(v)
+    idx.terms[wv] = c
+    return idx
+end
+function Index(v::Vector{Vector{ExprInt}})::Index
     idx = Index()
     c = Rational(BigInt(1))
     for vi in v

@@ -360,7 +360,7 @@ end
 function -(a::RegHoffman)::RegHoffman
     r = copy(a)
     for (d, h) in a.terms
-        r[d] = -h
+        r.terms[d] = -h
     end
     return r
 end
@@ -426,7 +426,7 @@ function *(a::NN, b::Index)::Index
     r = Index()
     if a != 0
         for (w, c) in b.terms
-            r[w] = c * a
+            r.terms[w] = c * a
         end
     end
     return r
@@ -484,14 +484,14 @@ end
 function *(a::Word, b::RegHoffman)::RegHoffman
     r = RegHoffman()
     for (d, h) in b.terms
-        r[d] = a * h
+        r.terms[d] = a * h
     end
     return r
 end
 function *(a::RegHoffman, b::Word)::RegHoffman
     r = RegHoffman()
     for (d, h) in a.terms
-        r[d] = h * b
+        r.terms[d] = h * b
     end
     return r
 end

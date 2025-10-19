@@ -59,7 +59,7 @@ function show(io::IO, ::MIME"text/plain", op::Operator)
         for i in 1:opl
             ot = typeof(op.ops[i])
             k = op.ops[i].cnt
-            if ot isa OpDeriv
+            if ot === OpDeriv
                 if k == 1
                     parts[i] = "∂" * string(op.ops[i].n)
                 else
@@ -77,7 +77,7 @@ function show(io::IO, ::MIME"text/plain", op::Operator)
         for i in 1:opl
             ot = typeof(op.ops[i])
             k = op.ops[i].cnt
-            if ot isa OpDeriv
+            if ot === OpDeriv
                 if k == 1
                     parts[i] = "∂" * string(op.ops[i].n)
                 elseif k > 0
@@ -100,7 +100,22 @@ function show(io::IO, ::MIME"text/plain", op::Operator)
     print(io, join(parts, " * "))
 end
 show(io::IO, op::Operator) = show(io, MIME("text/plain"), op)
-
+function show(io::IO, ::MIME"text/plain", op::AbstractOp)
+    if op isa OpDeriv
+        if _upper_represent[]
+            print(io,"∂",op.n,uppernumber(op.cnt))
+        else
+            print(io,"∂",op.n,"^",op.cnt)
+        end
+    else
+        if _upper_represent[]
+            print(io,_Operator_to_String_Table[typeof(op)],uppernumber(op.cnt))
+        else
+            print(io,_Operator_to_String_Table[typeof(op)],"^",op.cnt)
+        end
+    end
+end
+show(io::IO, op::AbstractOp) = show(io, MIME("text/plain"), op)
 
 
 
