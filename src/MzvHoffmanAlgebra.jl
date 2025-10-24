@@ -63,7 +63,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        Hoffman_hom, Hoffman_antihom, monomial_sw_w, starword_to_word,
        monomial_dual_h, monomial_dual_i, dual,
        monomial_hof_dual_h, monomial_hof_dual_i, Hoffman_dual,
-       monomial_Landen, Landen_dual
+       monomial_Landen, Landen_dual,
        # accessors.jl
        upper_represent, sortedprint,
        # operator.jl
