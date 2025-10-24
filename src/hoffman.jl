@@ -4,10 +4,14 @@
 
 #=
 export monomial_sh, monomial_st, monomial_st_star, monomial_sh_double, monomial_st_double, monomial_st_star_double,
-       shuffle_product, stuffle_product, star_stuffle_product, shuffle_product_double, stuffle_product_double,
-       shuffle_pow, stuffle_pow, shpw,
+       shuffle_product, stuffle_product, star_stuffle_product, 
+       shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
+       shuffle_pow, stuffle_pow, star_stuffle_pow, 
+       shpw, stpw, starstpw,
        Hoffman_hom, Hoffman_antihom, monomial_sw_w, starword_to_word,
-       monomial_dual, dual
+       monomial_dual_h, monomial_dual_i, dual,
+       monomial_hof_dual_h, monomial_hof_dual_i, Hoffman_dual,
+       monomial_Landen, Landen_dual
 =#
 
 """
@@ -393,18 +397,33 @@ function starstpw(a::Index,n::Int)::Index
     end
 end
 
+shuffle_product(a::Index, b::Index)::Index            = Index(shuffle_product(a.toHoffman, b.toHoffman))
+shuffle_product_double(a::Index)::Index               = Index(shuffle_product_double(a.toHoffman))
+shuffle_pow(a::Index, n::Int)::Index                  = Index(shuffle_pow(a.toHoffman, n))
+shpw(a::Index, n::Int)::Index                         = Index(shpw(a.toHoffman, n))
+
+stuffle_product(a::Hoffman, b::Hoffman)::Hoffman      = Hoffman(stuffle_product(a.toIndex, b.toIndex))
+stuffle_product_double(a::Hoffman)::Hoffman           = Hoffman(stuffle_product_double(a.toIndex))
+stuffle_pow(a::Hoffman, n::Int)::Hoffman              = Hoffman(stuffle_pow(a.toIndex, n))
+stpw(a::Hoffman, n::Int)::Hoffman                     = Hoffman(stpw(a.toIndex, n))
+
+star_stuffle_product(a::Hoffman, b::Hoffman)::Hoffman = Hoffman(star_stuffle_product(a.toIndex, b.toIndex))
+star_stuffle_product_double(a::Hoffman)::Hoffman      = Hoffman(star_stuffle_product_double(a.toIndex))
+star_stuffle_pow(a::Hoffman, n::Int)::Hoffman         = Hoffman(star_stuffle_pow(a.toIndex, n))
+starstpw(a::Hoffman, n::Int)::Hoffman                 = Hoffman(starstpw(a.toIndex, n))
+
 
 ###################################################################################################
 ############## homomorphic ########################################################################
 
-function Hoffman_hom(w::Word, image::Vector{Hoffman})::Hoffman
+@inline function Hoffman_hom(w::Word, image::Vector{Hoffman})::Hoffman
     s = one(Hoffman)
     for idx in w
-        s *= image[idx]
+        s = s * image[idx]
     end
     return s
 end
-function Hoffman_antihom(w::Word, image::Vector{Hoffman})::Hoffman
+@inline function Hoffman_antihom(w::Word, image::Vector{Hoffman})::Hoffman
     s = one(Hoffman)
     for idx in w
         s = image[idx] * s
@@ -414,8 +433,17 @@ end
 
 #star-valueのindexに対応するwordから通常のindexに
 function monomial_sw_w(w::Word)::Hoffman
-    return y * Hoffman_hom(w[2:end],[HoffmanWordtoHoffman(x),x + y])
+    s = one(Hoffman)
+    for idx in w[2:end]
+        if idx == 1
+            s *= x
+        else
+            s *= x+y
+        end
+    end
+    return y * s
 end
+
 function starword_to_word(w::Hoffman)::Hoffman
     s = Hoffman()
     for (mw,cw) in w.terms
@@ -423,15 +451,135 @@ function starword_to_word(w::Hoffman)::Hoffman
     end
     return s
 end
+starword_to_word(i::Index)::Index = Index(starword_to_word(i.toHoffman))
+
+
+###################################################################################################
+############## dual index #########################################################################
+
 
 # 双対インデックス
-function monomial_dual(w::Word)::Hoffman
-    return Hoffman_antihom(w,[HoffmanWordtoHoffman(y),HoffmanWordtoHoffman(x)])
+function monomial_dual_h(w::Word)::Word
+    r = Word((w[i]==1 ? 2 : 1) for i in lastindex(w):-1:1)
+    return r
+end
+function monomial_dual_i(w::Word)::Word
+    lw = lastindex(w)
+    l = sum(w) - lw
+    v = ones(Int,l)
+    cid = 0
+    for i in lw:-1:1
+        cid += w[i]-1
+        v[cid] += 1
+    end
+    return Word(v)
 end
 function dual(w::Hoffman)::Hoffman
     s = Hoffman()
     for (mw,cw) in w.terms
-        add!(s,monomial_dual(mw),cw)
+        mwd = monomial_dual_h(mw)
+        if haskey(s.terms,mwd)
+            if s.terms[mwd] == -cw
+                delete!(s.terms,mwd)
+            else
+                s.terms[mwd] += cw
+            end
+        else
+            s.terms[mwd] = cw
+        end
     end
     return s
 end
+function dual(i::Index)::Index
+    s = Index()
+    for (mw,cw) in i.terms
+        mwd = monomial_dual_i(mw)
+        if haskey(s.terms,mwd)
+            if s.terms[mwd] == -cw
+                delete!(s.terms,mwd)
+            else
+                s.terms[mwd] += cw
+            end
+        else
+            s.terms[mwd] = cw
+        end
+    end
+    return s
+end
+
+# Hoffman双対インデックス
+function monomial_hof_dual_h(w::Word)::Word
+    lw = lastindex(w)
+    if lw == 0
+        return w
+    end
+    return word(2) * Tuple{Vararg{Int}}(3-i for i in w[2:lw])
+end
+function Hoffman_dual(w::Hoffman)::Hoffman
+    s = Hoffman()
+    for (mw,cw) in w.terms
+        mwd = monomial_hof_dual_h(mw)
+        if haskey(s.terms,mwd)
+            if s.terms[mwd] == -cw
+                delete!(s.terms,mwd)
+            else
+                s.terms[mwd] += cw
+            end
+        else
+            s.terms[mwd] = cw
+        end
+    end
+    return s
+end
+function monomial_hof_dual_i(w::Word)::Word
+    lw = lastindex(w)
+    l = sum(w) - lw + 1
+    v = ones(Int,l)
+    cid = 1
+    for i in 1:lw-1
+        cid += w[i]-1
+        v[cid] += 1
+    end
+    return Word(v)
+end
+function Hoffman_dual(idx::Index)::Index
+    s = Index()
+    for (mw,cw) in idx.terms
+        mwd = monomial_hof_dual_i(mw)
+        if haskey(s.terms,mwd)
+            if s.terms[mwd] == -cw
+                delete!(s.terms,mwd)
+            else
+                s.terms[mwd] += cw
+            end
+        else
+            s.terms[mwd] = cw
+        end
+    end
+    return s
+end
+
+# Landen dual
+function monomial_Landen(w::Word)::Hoffman
+    s = one(Hoffman)
+    c1 = y+x
+    c2 = -HoffmanWordtoHoffman(y)
+    for i in 1:lastindex(w)
+        if w[i] == 1
+            s = s * c1
+        else
+            s = s * c2
+        end
+    end
+    return s
+end
+function Landen_dual(w::Hoffman)::Hoffman
+    s = Hoffman()
+    for (mw,cw) in w.terms
+        add!(s,monomial_Landen(mw),cw)
+    end
+    return s
+end
+Landen_dual(idx::Word)::Word = Index(monomial_Landen(IndexWordtoHoffmanWord(idx)))
+Landen_dual(idx::Index)::Index = Index(Landen_dual(idx.toHoffman))
+

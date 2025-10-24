@@ -83,12 +83,62 @@ function left_act(op::OpLeft, t::Index)::Index
     end
     return r
 end
+function left_act(op::OpTau, t::Index)::Index
+    r = copy(t)
+    if op.cnt & 1 == 1
+        return dual(r)
+    else
+        return r
+    end
+end
+function left_act(op::OpEta, t::Index)::Index
+    r = copy(t)
+    if op.cnt == 0
+        return r
+    else
+        for _ in 1:op.cnt
+            r = Hoffman_dual(r)
+        end
+    end
+    return r
+end
+function left_act(op::OpPhi, t::Index)::Index
+    r = copy(t)
+    if op.cnt == 0
+        return r
+    else
+        for _ in 1:op.cnt
+            r = Landen_dual(r)
+        end
+    end
+    return r
+end
 
 left_act(op::OpMinus, w::Word)::Word = w[1+op.cnt:end]
 left_act(op::OpUp, w::Word)::Word    = isone(w) ? word(op.cnt)  : word(w[1]+op.cnt,w[2:end]...)
 left_act(op::OpDown, w::Word)::Word  = isone(w) ? word(-op.cnt) : word(w[1]-op.cnt,w[2:end]...)
 left_act(op::OpLeft, w::Word)::Word  = word(1)^op.cnt * w
-
+left_act(op::OpTau, w::Word)::Word   = op.cnt & 1 == 1 ? monomial_dual_i(w) : w
+function left_act(op::OpEta, w::Word)::Word
+    if op.cnt == 0
+        return w
+    end
+    r = w
+    for _ in 1:op.cnt
+        r = monomial_hof_dual_i(r)
+    end
+    return r
+end
+function left_act(op::OpPhi, w::Word)::Index
+    if op.cnt == 0
+        return w
+    end
+    r = w
+    for _ in 1:op.cnt
+        r = Landen_dual(r)
+    end
+    return r
+end
 
 ############################## right_act ##############################
 function right_act(op::OpMinus, t::Index)::Index
