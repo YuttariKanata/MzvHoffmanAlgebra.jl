@@ -4,7 +4,7 @@
 
 #=
 export HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
-       word, IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
+       IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
        HoffmanWordtoIndex, IndexWordtoIndex,
        HoffmanWordtoHoffman, IndexWordtoHoffman,
        x, y, T
@@ -124,19 +124,20 @@ function IndexWordtoMonoIndex(w::Word)::MonoIndex
 end
 
 MonoIndex(m::MonoIndex)::MonoIndex = m
-MonoIndex(n::NN)::MonoIndex = MonoIndex((),n)
+MonoIndex(n::NN)::MonoIndex = MonoIndex(Word(),n)
 # TODO: MonoIndex for hrm shf mpl 
 
 
 # [============== about Word ==============]
-word(x::Int...)::Word = Word(x)
-const x = word(1)
-const y = word(2)
+Word()::Word = Word(())
+Word(x::Int...)::Word = Word(x)
+const x = Word(1)
+const y = Word(2)
 
-# Vector -> Word は Word(v) でいける
-word(m::MonoIndex)::Word = isone(m.coeff) ? m.word : throw(DomainError(m,"w's coefficient is not 1"))
+Word(v::Vector{Int})::Word = Word(Tuple(v))
+Word(m::MonoIndex)::Word = isone(m.coeff) ? m.word : throw(DomainError(m,"w's coefficient is not 1"))
 """returned Index word"""
-function word(i::Index)::Word
+function Word(i::Index)::Word
     if !is_monomial(i)
         throw(DomainError(i,"i must be monomial"))
     end
@@ -146,7 +147,7 @@ function word(i::Index)::Word
     return Word(first(keys(i.terms)))
 end
 """returned Hoffman word"""
-function word(w::Hoffman)::Word
+function Word(w::Hoffman)::Word
     if !is_monomial(w)
         throw(DomainError(i,"i must be monomial"))
     end
@@ -163,7 +164,7 @@ function HoffmanWordtoIndexWord(w::Word)::Word
     return Word(idxprs(w))
 end
 
-word(w::Word)::Word = w
+Word(w::Word)::Word = w
 # TODO: Word for hrm shf mpl
 
 
@@ -234,7 +235,7 @@ end
 Index(i::Index)::Index = i
 function Index(n::NN)::Index
     idx = Index()
-    idx.terms[()] = n
+    idx.terms[Word()] = n
     return idx
 end
 # TODO: Index for hrm shf mpl
@@ -280,7 +281,7 @@ end
 Hoffman(w::Hoffman)::Hoffman = w
 function Hoffman(n::NN)::Hoffman
     w = Hoffman()
-    w.terms[()] = n
+    w.terms[Word()] = n
     return w
 end
 # TODO: Hoffman for hrm shf mpl

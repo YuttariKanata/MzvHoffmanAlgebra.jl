@@ -513,7 +513,7 @@ function monomial_hof_dual_h(w::Word)::Word
     if lw == 0
         return w
     end
-    return word(2) * Tuple{Vararg{Int}}(3-i for i in w[2:lw])
+    return Word(2) * Tuple{Vararg{Int}}(3-i for i in w[2:lw])
 end
 function Hoffman_dual(w::Hoffman)::Hoffman
     s = Hoffman()

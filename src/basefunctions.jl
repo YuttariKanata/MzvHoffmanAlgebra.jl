@@ -2,6 +2,7 @@
 
 # This file defines the basic functions
 import Base: iszero, isone, zero, one, copy, ==, lastindex
+import Base: getindex, length, iterate, firstindex, eltype, isempty, copy, collect, Tuple, vcat, hcat, reverse, ==, hash, one, iterate, show, isless, isequal, in, convert
 
 #=
 export is_monomial, is_monoindex, is_hoffman, is_index,
@@ -254,6 +255,37 @@ end
 ###################################################################################################
 """
 
+###################################################################################################
+############## Word compatible interface ##########################################################
+
+# ===== Tuple 互換 =====
+getindex(w::Word, i::Int) = w.t[i]
+getindex(w::Word, r::UnitRange) = Word(w.t[r])
+length(w::Word) = length(w.t)
+iterate(w::Word, s...) = iterate(w.t, s...)
+firstindex(w::Word) = firstindex(w.t)
+lastindex(w::Word) = lastindex(w.t)
+eltype(::Type{Word}) = ExprInt
+isempty(w::Word) = isempty(w.t)
+
+# ===== 各種操作互換 =====
+copy(w::Word) = Word(w.t)                               # コピー
+collect(w::Word) = collect(w.t)                         # Vector化
+Tuple(w::Word) = w.t                                   # タプル化
+vcat(a::Word, b::Word) = Word((a.t..., b.t...))         # 連結
+hcat(a::Word, b::Word) = Word((a.t..., b.t...))
+reverse(w::Word) = Word(reverse(w.t))                   # 反転
+==(a::Word, b::Word) = a.t == b.t
+hash(w::Word, h::UInt) = hash(w.t, h)
+isless(a::Word, b::Word) = isless(a.t,b.t)
+isequal(a::Word, b::Word) = isequal(a.t, b.t)
+convert(::Type{Word}, t::Tuple)::Word = Word(t)
+
+# ===== スプラット互換 (a... が動くように) =====
+iterate(w::Word) = iterate(w.t)  # ←これが超重要！
+in(item, w::Word) = in(item, w.t)
+
+
 
 ###################################################################################################
 ############## Property Functions #################################################################
@@ -268,10 +300,10 @@ iszero(w::Hoffman)::Bool          = isempty(w.terms)
 #iszero(mpl::MPLCombination)::Bool =  # TODO
 iszero(r::RegHoffman)::Bool       = isempty(r.terms)
 
-isone(w::Word)::Bool             = w == ()
-isone(x::Index)::Bool            = length(x.terms) == 1 && haskey(x.terms,()) && isone(x.terms[()])
+isone(w::Word)::Bool             = w == Word()
+isone(x::Index)::Bool            = length(x.terms) == 1 && haskey(x.terms,Word()) && isone(x.terms[Word()])
 isone(m::MonoIndex)::Bool        = isone(m.word) && isone(m.coeff)
-isone(w::Hoffman)::Bool          = length(w.terms) == 1 && haskey(w.terms,()) && isone(w.terms[()])
+isone(w::Hoffman)::Bool          = length(w.terms) == 1 && haskey(w.terms,Word()) && isone(w.terms[Word()])
 #isone(hrm::HarmonicForm)::Bool   =  # TODO
 #isone(shf::ShuffleForm)::Bool    =  # TODO
 #isone(mpl::MPLCombination)::Bool =  # TODO
@@ -283,20 +315,20 @@ isone(r::RegHoffman)::Bool       = length(r.terms) == 1 && haskey(r.terms,0) && 
 ==(a::RegHoffman,b::RegHoffman)::Bool = a.terms == b.terms
 
 zero(::Type{T}) where T <: Union{Index,Hoffman,HarmonicForm,ShuffleForm,MPLCombination} = T()
-one(::Type{Word})::Word = ()
-one(::Type{MonoIndex})::MonoIndex = MonoIndex((),1)
+one(::Type{Word})::Word = Word()
+one(::Type{MonoIndex})::MonoIndex = MonoIndex(Word(),1)
 function one(::Type{Index})::Index
     idx = Index()
-    idx.terms[()] = 1
+    idx.terms[Word()] = 1
     return  idx
 end
 function one(::Type{Hoffman})::Hoffman
     w = Hoffman()
-    w.terms[()] = 1
+    w.terms[Word()] = 1
     return  w
 end
 function one(::Type{RegHoffman})::RegHoffman
-    r = RegHoffman
+    r = RegHoffman()
     r.terms[0] = one(Hoffman)
     return r
 end
@@ -356,7 +388,7 @@ end
             pos += t-1
         end
     end
-    return Tuple{Vararg{ExprInt}}(w)
+    return Word(w)
 end
 
 @inline function copy(a::Hoffman)::Hoffman

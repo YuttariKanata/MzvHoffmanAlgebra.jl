@@ -48,7 +48,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,
        # converting.jl
        HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
-       word, IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
+       IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
        HoffmanWordtoIndex, IndexWordtoIndex,
        HoffmanWordtoHoffman, IndexWordtoHoffman,
        x, y, T,

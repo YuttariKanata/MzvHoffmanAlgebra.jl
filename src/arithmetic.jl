@@ -24,12 +24,12 @@ export shift_degree, add!
 # NN Word
 function +(a::Word, b::NN)::Hoffman
     w = Hoffman()
-    if a != ()      # one(Word)
+    if a != one(Word)      # one(Word)
         w.terms[a] = Rational(BigInt(1))
-        w.terms[()] = b
+        w.terms[Word()] = b
     else
         if b != Clong(-1)
-            w.terms[()] = b + 1
+            w.terms[Word()] = b + 1
         end
     end
     return w
@@ -38,12 +38,12 @@ end
 -(a::Word, b::NN)::Hoffman = +(a,-b)
 function -(a::NN, b::Word)::Hoffman
     w = Hoffman()
-    if b != ()      # one(Word)
+    if b != one(Word)      # one(Word)
         w.terms[b] = Rational(BigInt(-1))
-        w.terms[()] = a
+        w.terms[Word()] = a
     else
         if a != Culong(1)
-            w.terms[()] = a - 1
+            w.terms[Word()] = a - 1
         end
     end
     return w
@@ -52,14 +52,14 @@ end
 # NN Hoffman
 function +(a::Hoffman, b::NN)::Hoffman
     r = copy(a)
-    if haskey(r.terms,())
-        if r.terms[()] == -b
-            delete!(r.terms,())
+    if haskey(r.terms,Word())
+        if r.terms[Word()] == -b
+            delete!(r.terms,Word())
         else
-            r.terms[()] += b
+            r.terms[Word()] += b
         end
     else
-        r.terms[()] = b
+        r.terms[Word()] = b
     end
     return r
 end
@@ -70,14 +70,14 @@ end
 # NN Index
 function +(a::Index, b::NN)::Index
     result = copy(a)
-    if haskey(result.terms,())
-        if result.terms[()] == -b
-            delete!(result.terms,())
+    if haskey(result.terms,Word())
+        if result.terms[Word()] == -b
+            delete!(result.terms,Word())
         else
-            result.terms[()] += b
+            result.terms[Word()] += b
         end
     else
-        result.terms[()] = b
+        result.terms[Word()] = b
     end
     return result
 end
@@ -88,12 +88,12 @@ end
 # NN MonoIndex
 function +(a::MonoIndex, b::NN)::Index
     r = Index()
-    if a.word != ()
+    if a.word != Word()
         r.terms[a.word] = Rational(BigInt(1))
-        r.terms[()] = b
+        r.terms[Word()] = b
     else
         if b != Clong(-1)
-            r.terms[()] = b + 1
+            r.terms[Word()] = b + 1
         end
     end
     return r
@@ -449,18 +449,18 @@ end
 ########## Word ##########
 # Word Word
 @inline function *(a::Word, b::Word)::Word
-    return (a... , b...)
+    return Word(a... , b...)
 end
 
-@inline function ^(t::Word, n::Integer)
-    n <= 0 && return ()
+@inline function ^(t::Word, n::Integer)::Word
+    n <= 0 && return Word()
     len = length(t)
     total = len * n
     v = Vector{eltype(t)}(undef, total)
     for i in 0:n-1
         copyto!(v, i*len + 1, t, 1, len)
     end
-    return Tuple{Vararg{ExprInt}}(v)
+    return Word(v)
 end
 
 
@@ -516,15 +516,33 @@ function *(a::Hoffman, b::Hoffman)::Hoffman
     return result
 end
 function ^(a::Hoffman, n::Integer)::Hoffman
-    if n<0
+    if n < 0
         throw(ArgumentError("Hoffman-type powers for negative exponents are not defined"))
-    elseif n==0
+    elseif n == 0
         return one(Hoffman)
-    elseif n==1
+    elseif n == 1
         return copy(a)
+    elseif isone(a)
+        return one(Hoffman)
     end
-    return a * (a^(n-1))
+
+    result = one(Hoffman)
+    base = copy(a)
+    nn = n
+
+    while nn > 0
+        if (nn & 1) == 1
+            result = result * base
+        end
+        nn >>= 1
+        if nn > 0
+            base = base * base
+        end
+    end
+
+    return result
 end
+
 
 # Hoffman RegHoffman
 function *(a::RegHoffman, b::Hoffman)::RegHoffman
@@ -573,6 +591,46 @@ function *(a::RegHoffman, b::RegHoffman)::RegHoffman
     end
     # 通常の掛け算
     return normal_multiply_RegHoffman(a,b)
+end
+function ^(a::RegHoffman, n::Integer)::RegHoffman
+    if n < 0
+        throw(DomainError(n, "negative power is not supported for RegHoffman"))
+    elseif n == 0
+        return one(RegHoffman)
+    elseif n == 1
+        return copy(a)
+    end
+
+    # 最適化: a が単項 T^k (係数が exactly one(Hoffman)) の場合
+    if length(a.terms) == 1
+        (deg, coeff) = first(a.terms)
+        r = RegHoffman()
+        if deg == 0
+            r.terms[0] = coeff ^ n
+        elseif isone(coeff)
+            r.terms[deg * Int(n)] = one(Hoffman)
+        else
+            r.terms[deg * Int(n)] = coeff ^ n
+        end
+        return r
+    end    
+
+    # 二乗累乗（binary exponentiation）
+    base = copy(a)
+    result = one(RegHoffman)
+    nn = Int(n)  # n は非負なので安全に Int に落とす
+
+    while nn > 0
+        if (nn & 1) == 1
+            result = result * base   # 既に定義済みの *(RegHoffman, RegHoffman) を使用
+        end
+        nn >>= 1
+        if nn > 0
+            base = base * base
+        end
+    end
+
+    return result
 end
 
 # degree shift

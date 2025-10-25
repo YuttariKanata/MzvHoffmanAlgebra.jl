@@ -164,7 +164,7 @@ function getproperty(w::Word, sym::Symbol)
     elseif sym == :rmlast
         return remove_lastletter(w)
     else
-        return getfiled(w,sym)
+        return getfield(w,sym)
     end
 end
 
@@ -189,7 +189,9 @@ end
     end
     return s
 end
-
+function show(io::IO, ::MIME"text/plain", w::Word)
+    show(io, MIME("text/plain"), w.t)
+end
 function show(io::IO, ::MIME"text/plain", w::Hoffman)
     if iszero(w)
         print(io, "0")
@@ -208,7 +210,7 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
                     print(io, coeff_to_str(coeff))
                 end
             else
-                print(io, coeff_to_str(coeff), " ")
+                print(io, coeff_to_str(coeff))
             end
         else
             if coeff < 0
@@ -217,8 +219,8 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
             else
                 print(io, " + ")
             end
-            if coeff != 1//1
-                print(io, coeff_to_str(coeff), " ")
+            if coeff != 1//1 || isempty(word)
+                print(io, coeff_to_str(coeff))
             end
         end
 
@@ -295,3 +297,45 @@ function sortedprint(idx::Index)
         println(lpad(c,number_space)," [",join(wo,", "),"]")
     end
 end
+
+# function show(io::IO, ::MIME"text/plain", r::RegHoffman)
+#     if iszero(r)
+#         print(io, "0")
+#         return
+#     end
+
+#     degs = sort(collect(keys(r.terms)),rev=true)
+
+#     for d in degs
+        
+#     end
+
+#     first = true
+#     for (word, coeff) in w.terms
+#         # ±の表示
+#         if first
+#             first = false
+#             if coeff == Clong(-1)
+#                 print(io, "- ")
+#             elseif coeff == Culong(1)
+#                 if isempty(word)
+#                     print(io, coeff_to_str(coeff))
+#                 end
+#             else
+#                 print(io, coeff_to_str(coeff), " ")
+#             end
+#         else
+#             if coeff < 0
+#                 print(io, " - ")
+#                 coeff = -coeff
+#             else
+#                 print(io, " + ")
+#             end
+#             if coeff != 1//1
+#                 print(io, coeff_to_str(coeff), " ")
+#             end
+#         end
+
+#         print(io, word_to_str(word) )
+#     end
+# end

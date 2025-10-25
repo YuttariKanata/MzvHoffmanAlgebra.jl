@@ -55,9 +55,9 @@ function left_act(op::OpUp, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
         if isone(w)
-            key = word(op.cnt)
+            key = Word(op.cnt)
         else
-            key = word(w[1]+op.cnt,w[2:end]...)
+            key = Word(w[1]+op.cnt,w[2:end]...)
         end
         r.terms[key] = get(r.terms, key, 0) + c
     end
@@ -67,9 +67,9 @@ function left_act(op::OpDown, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
         if isone(w)
-            key = word(-op.cnt)
+            key = Word(-op.cnt)
         else
-            key = word(w[1]-op.cnt,w[2:end]...)
+            key = Word(w[1]-op.cnt,w[2:end]...)
         end
         r.terms[key] = get(r.terms, key, 0) + c
     end
@@ -78,7 +78,7 @@ end
 function left_act(op::OpLeft, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
-        key = word(1)^op.cnt * w
+        key = Word(1)^op.cnt * w
         r.terms[key] = get(r.terms, key, 0) + c
     end
     return r
@@ -115,9 +115,9 @@ function left_act(op::OpPhi, t::Index)::Index
 end
 
 left_act(op::OpMinus, w::Word)::Word = w[1+op.cnt:end]
-left_act(op::OpUp, w::Word)::Word    = isone(w) ? word(op.cnt)  : word(w[1]+op.cnt,w[2:end]...)
-left_act(op::OpDown, w::Word)::Word  = isone(w) ? word(-op.cnt) : word(w[1]-op.cnt,w[2:end]...)
-left_act(op::OpLeft, w::Word)::Word  = word(1)^op.cnt * w
+left_act(op::OpUp, w::Word)::Word    = isone(w) ? Word(op.cnt)  : Word(w[1]+op.cnt,w[2:end]...)
+left_act(op::OpDown, w::Word)::Word  = isone(w) ? Word(-op.cnt) : Word(w[1]-op.cnt,w[2:end]...)
+left_act(op::OpLeft, w::Word)::Word  = Word(1)^op.cnt * w
 left_act(op::OpTau, w::Word)::Word   = op.cnt & 1 == 1 ? monomial_dual_i(w) : w
 function left_act(op::OpEta, w::Word)::Word
     if op.cnt == 0
@@ -153,9 +153,9 @@ function right_act(op::OpUp, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
         if isone(w)
-            key = word(op.cnt)
+            key = Word(op.cnt)
         else
-            key = word(w[1:end-1]..., w[end]+op.cnt)
+            key = Word(w[1:end-1]..., w[end]+op.cnt)
         end
         r.terms[key] = get(r.terms, key, 0) + c
     end
@@ -165,9 +165,9 @@ function right_act(op::OpDown, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
         if isone(w)
-            key = word(-op.cnt)
+            key = Word(-op.cnt)
         else
-            key = word(w[1:end-1]..., w[end]-op.cnt)
+            key = Word(w[1:end-1]..., w[end]-op.cnt)
         end
         r.terms[key] = get(r.terms, key, 0) + c
     end
@@ -176,16 +176,16 @@ end
 function right_act(op::OpRight, t::Index)::Index
     r = Index()
     for (w,c) in t.terms
-        key = w * word(1)^op.cnt
+        key = w * Word(1)^op.cnt
         r.terms[key] = get(r.terms, key, 0) + c
     end
     return r
 end
 
 right_act(op::OpMinus, w::Word)::Word = w[1:end-op.cnt]
-right_act(op::OpUp, w::Word)::Word    = isone(w) ? word(op.cnt)  : word(w[1:end-1]..., w[end]+op.cnt)
-right_act(op::OpDown, w::Word)::Word  = isone(w) ? word(-op.cnt) : word(w[1:end-1]..., w[end]-op.cnt)
-right_act(op::OpRight, w::Word)::Word = w * word(1)^op.cnt
+right_act(op::OpUp, w::Word)::Word    = isone(w) ? Word(op.cnt)  : Word(w[1:end-1]..., w[end]+op.cnt)
+right_act(op::OpDown, w::Word)::Word  = isone(w) ? Word(-op.cnt) : Word(w[1:end-1]..., w[end]-op.cnt)
+right_act(op::OpRight, w::Word)::Word = w * Word(1)^op.cnt
 
 ############################## multiplication ##############################
 function *(a::Operator, b::Operator)::Operator
@@ -292,7 +292,7 @@ end
 function WordtoOperator(w::Word)::Operator
     r = Operator()
     lw = lastindex(w)
-    if w == 0
+    if lw == 0
         return r
     end
     v = Vector{AbstractOp}(undef,lw*2)

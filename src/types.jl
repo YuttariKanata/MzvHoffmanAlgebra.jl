@@ -132,7 +132,14 @@ const NN = Union{Integer,Rational}
 
 # ワード = インデックス列。ハッシュ性と軽さ重視で Tuple に
 # WordのTupleの中身はimmutableなものにしておいてください！！！
-const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
+#const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
+# Wordの定義を上記から下記へ変更した このためにWordがTupleのようにふるまうインターフェースをbasefunctions.jlに書いた
+struct Word
+    t::Tuple{Vararg{Int}}
+    function Word(w::Tuple{Vararg{Int}})
+        new(w)
+    end
+end
 
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
