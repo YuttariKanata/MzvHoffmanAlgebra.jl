@@ -110,14 +110,31 @@ function MonoIndex(w::Hoffman)::MonoIndex
         throw(DomainError(w,"w must be monomial"))
     end
     wo = first(keys(w.terms))
-    if wo[1] != 2 # yに対応するだけ
-        throw(DomainError(w,"w does not start with y"))
+    if get_index_orientation()
+        if wo[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return MonoIndex(idxprs(wo))
+    else
+        if wo[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return MonoIndex(idxprs_r(wo))
     end
-    return MonoIndex(idxprs(wo))
 end
 
 function HoffmanWordtoMonoIndex(w::Word)::MonoIndex
-    return MonoIndex(idxprs(w))
+    if get_index_orientation()
+        if w[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return MonoIndex(idxprs(w))
+    else
+        if w[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return MonoIndex(idxprs_r(w))
+    end
 end
 function IndexWordtoMonoIndex(w::Word)::MonoIndex
     return MonoIndex(w,Rational(BigInt(1)))
@@ -158,10 +175,24 @@ function Word(w::Hoffman)::Word
 end
 
 function IndexWordtoHoffmanWord(w::Word)::Word
-    return idxdprs(collect(w))
+    if get_index_orientation()
+        return idxdprs(collect(w))
+    else
+        return idxdprs_r(collect(w))
+    end
 end
 function HoffmanWordtoIndexWord(w::Word)::Word
-    return Word(idxprs(w))
+    if get_index_orientation()
+        if w[1] != 2 # yに対応するだけ
+            throw(DomainError(w,"w does not start with y"))
+        end
+        return Word(idxprs(w))
+    else
+        if w[end] != 2
+            throw(DomainError(w,"w does not end with y"))
+        end
+        return Word(idxprs_r(w))
+    end
 end
 
 Word(w::Word)::Word = w

@@ -366,21 +366,47 @@ is_zetaexpr(x::MPL)::Bool       = typeof(x) <: ZetaExpr
     end
     return v
 end
+""" example (1,2,1,1,2,2) -> [2,3,1] """
+@inline function idxprs_r(w::Word)::Vector{Int}
+    n2 = count(==(2), w)
+    v = Vector{Int}(undef,n2)
+    idx = 0
+    cnt = 1
+    for x in w
+        if x == 1
+            cnt += 1
+        else
+            idx += 1
+            v[idx] = cnt
+            cnt = 1
+        end
+    end
+    return v
+end
 # index expander
 """ example [1,3,2] -> (2,2,1,1,2,1) """
 @inline function idxdprs(v::Vector{Int})::Word
     # 総長さを一度に計算してから確保
     total_len = sum(v)
-    w = Vector{ExprInt}(undef, total_len)
+    w = ones(Int,total_len)
 
     pos = 1
     for t in v
         w[pos] = 2
-        pos += 1
-        if t > 0
-            fill!(view(w, pos:pos+t-2), 1)
-            pos += t-1
-        end
+        pos += t
+    end
+    return Word(w)
+end
+""" example [2,3,1] -> (1,2,1,1,2,2) """
+@inline function idxdprs_r(v::Vector{Int})::Word
+    # 総長さを一度に計算してから確保
+    total_len = sum(v)
+    w = ones(Int,total_len)
+
+    pos = 0
+    for t in v
+        pos += t
+        w[pos] = 2
     end
     return Word(w)
 end

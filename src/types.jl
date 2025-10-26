@@ -141,6 +141,14 @@ struct Word
     end
 end
 
+# 個人によるIndexの向きの補正
+const _INDEX_ORIENTATION = Base.RefValue{Bool}(true)
+# true  : z_k = y*x^{k-1}
+# false : z_k = x^{k-1}*y
+
+set_index_orientation!(val::Bool) = (_INDEX_ORIENTATION[] = val)
+get_index_orientation() = _INDEX_ORIENTATION[]
+
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
 mutable struct Hoffman <: ZetaExpr
@@ -163,6 +171,8 @@ mutable struct MonoIndex <: ZetaExpr
 end
 
 # yxyx^3y^2x^2 -> [2,4,1,3]
+# もし _INDEX_ORIENTATION がfalseなら
+# x^2y^2x^3yxy -> [3,1,4,2]
 mutable struct Index <: ZetaExpr
     terms::Dict{Word, Rational{BigInt}}
     function Index()

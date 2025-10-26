@@ -156,7 +156,11 @@ function getproperty(w::Word, sym::Symbol)
     if sym == :toindex
         return idxdprs(collect(w))
     elseif sym == :toword
-        return Word(idxprs(w))
+        if get_index_orientation()
+            return Word(idxprs(w))
+        else
+            return Word(idxprs_r(w))
+        end
     elseif sym == :tovec
         return collect(Int64,w)
     elseif sym == :last
@@ -377,7 +381,9 @@ function show(io::IO, ::MIME"text/plain", r::RegHoffman)
             continue
         else
             if is_monomial(ch)
-                naturalshow(io,ch,first)
+                if !isone(ch)
+                    naturalshow(io,ch,first)
+                end
             else
                 print(io, Sg, "(")
                 show(io, MIME("text/plain"), ch)
@@ -386,9 +392,9 @@ function show(io::IO, ::MIME"text/plain", r::RegHoffman)
         end
         Sg = " + "
         if d == 1
-            print(io, " T")
+            print(io, "T")
         else
-            print(io, " T^",d)
+            print(io, "T^",d)
         end
         first = false
     end

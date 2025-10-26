@@ -86,6 +86,27 @@ function monomial_sh(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_sh_r(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
+    lb = lastindex(b)
+    la = lastindex(a)
+    h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
+
+    h1[1] = [Int[]]
+    for i in 1:la
+        h1[i+1] = [a[la+1-i:la]]
+    end
+
+    for i in 1:lb
+        
+        h1[1] = [b[lb+1-i:lb]]
+
+        for j in 1:la
+            h1[j+1] = vcat(vcat.(a[la+1-j],h1[j]),vcat.(b[lb+1-i],h1[j+1]))
+        end
+    end
+
+    return h1[end]
+end
 function monomial_st(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
     lb = lastindex(b)
     la = lastindex(a)
@@ -111,9 +132,50 @@ function monomial_st(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_st_r(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
+    lb = lastindex(b)
+    la = lastindex(a)
+    h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
+
+    h1[1] = [Int[]]
+    for i in 1:la
+        h1[i+1] = [a[la+1-i,la]]
+    end
+
+    for i in 1:lb
+
+        buf1 = [b[lb+1-i:lb]]
+
+        for j in 1:la
+            buf2 = h1[j]
+            h1[j] = buf1
+            buf1 = vcat(vcat.(a[la+1-j],buf1),vcat.(b[lb+1-i],h1[j+1]),vcat.(a[la+1-j]+b[lb+1-i],buf2))
+        end
+
+        h1[end] = buf1
+    end
+
+    return h1[end]
+end
 function monomial_st_star(a::Vector{Int}, b::Vector{Int})::Tuple{Vector{Vector{Int}}, Vector{Bool}}
     # 通常の stuffle（符号なし）
     words = monomial_st(a, b)
+
+    dep_sum = (lastindex(a) + lastindex(b)) & 1
+    n = lastindex(words)
+    signs = Vector{Bool}(undef, n)
+
+    for i in 1:n
+        dep = lastindex(words[i])
+        # 偶奇が同じなら +（false）、異なれば −（true）
+        signs[i] = xor(dep_sum,dep) & 1
+    end
+
+    return words, signs
+end
+function monomial_st_star_r(a::Vector{Int}, b::Vector{Int})::Tuple{Vector{Vector{Int}}, Vector{Bool}}
+    # 通常の stuffle（符号なし）
+    words = monomial_st_r(a, b)
 
     dep_sum = (lastindex(a) + lastindex(b)) & 1
     n = lastindex(words)
@@ -148,6 +210,26 @@ function monomial_sh_double(a::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_sh_double_r(a::Vector{Int})::Vector{Vector{Int}}
+    la = lastindex(a)
+
+    h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
+
+    h1[1] = [Int[]]
+    for i in 1:la
+        h1[i+1] = [a[la+1-i:la]]
+    end
+
+    for i in 1:la
+        h1[i] = h1[i+1]
+
+        for j in i:la
+            h1[j+1] = vcat(vcat.(a[la+1-j],h1[j]),vcat.(a[la+1-i],h1[j+1]))
+        end
+    end
+
+    return h1[end]
+end
 function monomial_st_double(a::Vector{Int})::Vector{Vector{Int}}
     la = lastindex(a)
     h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
@@ -172,9 +254,47 @@ function monomial_st_double(a::Vector{Int})::Vector{Vector{Int}}
 
     return h1[end]
 end
+function monomial_st_double_r(a::Vector{Int})::Vector{Vector{Int}}
+    la = lastindex(a)
+    h1 = Vector{Vector{Vector{Int}}}(undef,la+1)
+
+    h1[1] = [Int[]]
+    for i in 1:la
+        h1[i+1] = [a[la+1-i:la]]
+    end
+
+    for i in 1:la
+
+        buf1 = h1[i+1]
+
+        for j in i:la
+            buf2 = h1[j]
+            h1[j] = buf1
+            buf1 = vcat(vcat.(a[la+1-j],buf1),vcat.(a[la+1-i],h1[j+1]),vcat.(a[la+1-j]+a[la+1-i],buf2))
+        end
+
+        h1[end] = buf1
+    end
+
+    return h1[end]
+end
 function monomial_st_star_double(a::Vector{Int})::Tuple{Vector{Vector{Int}},Vector{Bool}}
     # 通常の stuffle（符号なし）
     words = monomial_st_double(a)
+
+    n = lastindex(words)
+    signs = Vector{Bool}(undef, n)
+    
+    for i in 1:n
+        # 偶奇が同じなら +（false）、異なれば −（true）
+        signs[i] = lastindex(words[i]) & 1
+    end
+    
+    return words, signs
+end
+function monomial_st_star_double_r(a::Vector{Int})::Tuple{Vector{Vector{Int}},Vector{Bool}}
+    # 通常の stuffle（符号なし）
+    words = monomial_st_double_r(a)
 
     n = lastindex(words)
     signs = Vector{Bool}(undef, n)
@@ -193,34 +313,65 @@ end
 
 function shuffle_product(a::Hoffman, b::Hoffman)::Hoffman
     s1 = Hoffman()
-    for (ma,ca) in a.terms
-        s2 = Hoffman()
-        for (mb,cb) in b.terms
-            add!(s2,Hoffman(monomial_sh(ma.tovec,mb.tovec)),cb)
+    if get_index_orientation()
+        for (ma,ca) in a.terms
+            s2 = Hoffman()
+            for (mb,cb) in b.terms
+                add!(s2,Hoffman(monomial_sh(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
         end
-        add!(s1,s2,ca)
+    else
+        for (ma,ca) in a.terms
+            s2 = Hoffman()
+            for (mb,cb) in b.terms
+                add!(s2,Hoffman(monomial_sh_r(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
+        end
     end
+
     return s1
 end
 function stuffle_product(a::Index, b::Index)::Index
     s1 = Index()
-    for (ma,ca) in a.terms
-        s2 = Index()
-        for (mb,cb) in b.terms
-            add!(s2,Index(monomial_st(ma.tovec,mb.tovec)),cb)
+    if get_index_orientation()
+        for (ma,ca) in a.terms
+            s2 = Index()
+            for (mb,cb) in b.terms
+                add!(s2,Index(monomial_st(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
         end
-        add!(s1,s2,ca)
+    else
+        for (ma,ca) in a.terms
+            s2 = Index()
+            for (mb,cb) in b.terms
+                add!(s2,Index(monomial_st_r(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
+        end
     end
     return s1
 end
 function star_stuffle_product(a::Index, b::Index)::Index
     s1 = Index()
-    for (ma,ca) in a.terms
-        s2 = Index()
-        for (mb,cb) in b.terms
-            add!(s2,Index(monomial_st_star(ma.tovec,mb.tovec)),cb)
+    if get_index_orientation()
+        for (ma,ca) in a.terms
+            s2 = Index()
+            for (mb,cb) in b.terms
+                add!(s2,Index(monomial_st_star(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
         end
-        add!(s1,s2,ca)
+    else
+        for (ma,ca) in a.terms
+            s2 = Index()
+            for (mb,cb) in b.terms
+                add!(s2,Index(monomial_st_star_r(ma.tovec,mb.tovec)),cb)
+            end
+            add!(s1,s2,ca)
+        end
     end
     return s1
 end
@@ -229,21 +380,40 @@ function shuffle_product_double(a::Hoffman)::Hoffman
     pairs = collect(a.terms)
     n = lastindex(pairs)
 
-    for i in 1:n
-        wi, ci = pairs[i]
-        vi = collect(wi)
-
-        # 自乗項
-        add!(result, Hoffman(monomial_sh_double(vi)), ci^2)
-
-        # 交差項
-        for j in i+1:n
-            wj, cj = pairs[j]
-            vj = collect(wj)
-
-            add!(result, Hoffman(monomial_sh(vi, vj)), 2*ci*cj)
+    if get_index_orientation()
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Hoffman(monomial_sh_double(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Hoffman(monomial_sh(vi, vj)), 2*ci*cj)
+            end
+    
         end
-
+    else
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Hoffman(monomial_sh_double_r(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Hoffman(monomial_sh_r(vi, vj)), 2*ci*cj)
+            end
+    
+        end
     end
 
     return result
@@ -253,19 +423,37 @@ function stuffle_product_double(a::Index)::Index
     pairs = collect(a.terms)
     n = lastindex(pairs)
 
-    for i in 1:n
-        wi, ci = pairs[i]
-        vi = collect(wi)
-
-        # 自乗項
-        add!(result, Index(monomial_st_double(vi)), ci^2)
-
-        # 交差項
-        for j in i+1:n
-            wj, cj = pairs[j]
-            vj = collect(wj)
-
-            add!(result, Index(monomial_st(vi, vj)), 2*ci*cj)
+    if get_index_orientation()
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Index(monomial_st_double(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Index(monomial_st(vi, vj)), 2*ci*cj)
+            end
+        end
+    else
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Index(monomial_st_double_r(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Index(monomial_st_r(vi, vj)), 2*ci*cj)
+            end
         end
     end
 
@@ -276,19 +464,37 @@ function star_stuffle_product_double(a::Index)::Index
     pairs = collect(a.terms)
     n = lastindex(pairs)
 
-    for i in 1:n
-        wi, ci = pairs[i]
-        vi = collect(wi)
-
-        # 自乗項
-        add!(result, Index(monomial_st_star_double(vi)), ci^2)
-
-        # 交差項
-        for j in i+1:n
-            wj, cj = pairs[j]
-            vj = collect(wj)
-
-            add!(result, Index(monomial_st_star(vi, vj)), 2*ci*cj)
+    if get_index_orientation()
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Index(monomial_st_star_double(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Index(monomial_st_star(vi, vj)), 2*ci*cj)
+            end
+        end
+    else
+        for i in 1:n
+            wi, ci = pairs[i]
+            vi = collect(wi)
+    
+            # 自乗項
+            add!(result, Index(monomial_st_star_double_r(vi)), ci^2)
+    
+            # 交差項
+            for j in i+1:n
+                wj, cj = pairs[j]
+                vj = collect(wj)
+    
+                add!(result, Index(monomial_st_star_r(vi, vj)), 2*ci*cj)
+            end
         end
     end
 
@@ -308,17 +514,32 @@ function shuffle_pow(a::Hoffman,n::Int)::Hoffman
         return base
     end
     
-    if n&1 == 1
-        r = shuffle_product(r,base)
-    end
-    n >>= 1
-    while n>0
-        base = shuffle_product_double(base)
+    if get_index_orientation()
         if n&1 == 1
             r = shuffle_product(r,base)
         end
-        n>>=1
+        n >>= 1
+        while n>0
+            base = shuffle_product_double(base)
+            if n&1 == 1
+                r = shuffle_product(r,base)
+            end
+            n>>=1
+        end
+    else
+        if n&1 == 1
+            r = shuffle_product(r,base)
+        end
+        n >>= 1
+        while n>0
+            base = shuffle_product_double(base)
+            if n&1 == 1
+                r = shuffle_product(r,base)
+            end
+            n>>=1
+        end
     end
+
     return r
 end
 function stuffle_pow(a::Index,n::Int)::Index
@@ -443,12 +664,31 @@ function monomial_sw_w(w::Word)::Hoffman
     end
     return y * s
 end
+function monomial_sw_w_r(w::Word)::Hoffman
+    s = one(Hoffman)
+    for i in lastindex(w)-1:-1:1
+        idx = w[i]
+        if idx == 1
+            s = x * s
+        else
+            s = (x+y) * s
+        end
+    end
+    return s * y
+end
 
 function starword_to_word(w::Hoffman)::Hoffman
     s = Hoffman()
-    for (mw,cw) in w.terms
-        add!(s,monomial_sw_w(mw),cw)
+    if get_index_orientation()
+        for (mw,cw) in w.terms
+            add!(s,monomial_sw_w(mw),cw)
+        end
+    else
+        for (mw,cw) in w.terms
+            add!(s,monomial_sw_w_r(mw),cw)
+        end
     end
+
     return s
 end
 starword_to_word(i::Index)::Index = Index(starword_to_word(i.toHoffman))
@@ -460,7 +700,7 @@ starword_to_word(i::Index)::Index = Index(starword_to_word(i.toHoffman))
 
 # 双対インデックス
 function monomial_dual_h(w::Word)::Word
-    r = Word((w[i]==1 ? 2 : 1) for i in lastindex(w):-1:1)
+    r = Word(Tuple((w[i]==1 ? 2 : 1) for i in lastindex(w):-1:1))
     return r
 end
 function monomial_dual_i(w::Word)::Word
@@ -470,6 +710,17 @@ function monomial_dual_i(w::Word)::Word
     cid = 0
     for i in lw:-1:1
         cid += w[i]-1
+        v[cid] += 1
+    end
+    return Word(v)
+end
+function monomial_dual_i_r(w::Word)::Word
+    lw = lastindex(w)
+    l = sum(w) - lw
+    v = ones(Int,l)
+    cid = l+1
+    for i in 1:lw
+        cid -= w[i]-1
         v[cid] += 1
     end
     return Word(v)
@@ -492,18 +743,34 @@ function dual(w::Hoffman)::Hoffman
 end
 function dual(i::Index)::Index
     s = Index()
-    for (mw,cw) in i.terms
-        mwd = monomial_dual_i(mw)
-        if haskey(s.terms,mwd)
-            if s.terms[mwd] == -cw
-                delete!(s.terms,mwd)
+    if get_index_orientation()
+        for (mw,cw) in i.terms
+            mwd = monomial_dual_i(mw)
+            if haskey(s.terms,mwd)
+                if s.terms[mwd] == -cw
+                    delete!(s.terms,mwd)
+                else
+                    s.terms[mwd] += cw
+                end
             else
-                s.terms[mwd] += cw
+                s.terms[mwd] = cw
             end
-        else
-            s.terms[mwd] = cw
+        end
+    else
+        for (mw,cw) in i.terms
+            mwd = monomial_dual_i_r(mw)
+            if haskey(s.terms,mwd)
+                if s.terms[mwd] == -cw
+                    delete!(s.terms,mwd)
+                else
+                    s.terms[mwd] += cw
+                end
+            else
+                s.terms[mwd] = cw
+            end
         end
     end
+
     return s
 end
 
@@ -513,7 +780,7 @@ function monomial_hof_dual_h(w::Word)::Word
     if lw == 0
         return w
     end
-    return Word(2) * Tuple{Vararg{Int}}(3-i for i in w[2:lw])
+    return Word(2) * Word(Tuple(3-i for i in w[2:lw]))
 end
 function Hoffman_dual(w::Hoffman)::Hoffman
     s = Hoffman()
