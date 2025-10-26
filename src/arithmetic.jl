@@ -104,15 +104,17 @@ end
 
 ## NN RegHoffman
 function +(a::RegHoffman, b::NN)::RegHoffman
+    bc = Hoffman(b)
+    bd = Hoffman(-b)
     r = copy(a)
     if haskey(r.terms,0)
-        if r.terms[0] == Hoffman(-b)
+        if r.terms[0] == -bd
             delete!(r.terms,0)
         else
-            r.terms[0] += b
+            r.terms[0] += bc
         end
     else
-        r.terms[0] = b
+        r.terms[0] = bc
     end
     return r
 end
@@ -122,6 +124,12 @@ end
 
 
 ########## Word ##########
+# Word
+function -(a::Word)::Hoffman
+    r = Hoffman()
+    r.terms[a] = Rational(BigInt(-1))
+    return r
+end
 # Word Word
 function +(a::Word, b::Word)::Hoffman
     r = Hoffman()

@@ -168,6 +168,13 @@ function getproperty(w::Word, sym::Symbol)
     end
 end
 
+function getproperty(r::RegHoffman, sym::Symbol)
+    if sym == :sortshow
+        sortedprint(r)
+    else
+        return getfield(r,sym)
+    end
+end
 
 ###################################################################################################
 ############## about representation ###############################################################
@@ -207,10 +214,10 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
                 print(io, "- ")
             elseif coeff == Culong(1)
                 if isempty(word)
-                    print(io, coeff_to_str(coeff))
+                    print(io, coeff_to_str(coeff), "")
                 end
             else
-                print(io, coeff_to_str(coeff))
+                print(io, coeff_to_str(coeff), "")
             end
         else
             if coeff < 0
@@ -219,8 +226,8 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
             else
                 print(io, " + ")
             end
-            if coeff != 1//1 || isempty(word)
-                print(io, coeff_to_str(coeff))
+            if coeff != Culong(1) || isempty(word)
+                print(io, coeff_to_str(coeff), "")
             end
         end
 
@@ -243,10 +250,10 @@ function show(io::IO, ::MIME"text/plain", idx::Index)
                 print(io, "- ")
             elseif coeff == Culong(1)
                 if isempty(word)
-                    print(io, coeff_to_str(coeff))
+                    print(io, coeff_to_str(coeff), "")
                 end
             else
-                print(io, coeff_to_str(coeff))
+                print(io, coeff_to_str(coeff), "")
             end
         else
             if coeff < 0
@@ -255,8 +262,8 @@ function show(io::IO, ::MIME"text/plain", idx::Index)
             else
                 print(io, " + ")
             end
-            if coeff != 1//1
-                print(io, coeff_to_str(coeff))
+            if coeff != 1//1 || isempty(word)
+                print(io, coeff_to_str(coeff), "")
             end
         end
 
@@ -268,6 +275,12 @@ end
 show(io::IO, idx::Index) = show(io, MIME("text/plain"), idx)
 
 function sortedprint(w::Hoffman)
+    if iszero(w)
+        println("Hoffman with no entry:")
+        println("    0")
+        return
+    end
+
     words = keys(w.terms)
     coeffs = values(w.terms)
     
@@ -276,13 +289,23 @@ function sortedprint(w::Hoffman)
     
     sorted_word = sort(collect(words); by = t -> (length(t), t))
 
-    println("Hoffman with $(length(w.terms)) entries:")
+    if length(w.terms) == 1
+        println("Hoffman with $(length(w.terms)) entry:")
+    else
+        println("Hoffman with $(length(w.terms)) entries:")
+    end
     for wo in sorted_word
         c = coeff_to_str(w.terms[wo])
         println(lpad(c,number_space)," ",word_to_str(wo))
     end
 end
 function sortedprint(idx::Index)
+    if iszero(idx)
+        println("Index with no entry:")
+        println("    0 []")
+        return
+    end
+
     words = keys(idx.terms)
     coeffs = values(idx.terms)
     
@@ -291,51 +314,118 @@ function sortedprint(idx::Index)
     
     sorted_word = sort(collect(words); by = t -> (sum(t), t))
 
-    println("Index with $(length(idx.terms)) entries:")
+    if length(idx.terms) == 1
+        println("Index with $(length(idx.terms)) entry:")
+    else
+        println("Index with $(length(idx.terms)) entries:")
+    end
     for wo in sorted_word
         c = coeff_to_str(idx.terms[wo])
         println(lpad(c,number_space)," [",join(wo,", "),"]")
     end
 end
+function naturalshow(io::IO, w::Hoffman, f::Bool)
+    if iszero(w)
+        print(io, "0")
+        return
+    end
 
-# function show(io::IO, ::MIME"text/plain", r::RegHoffman)
-#     if iszero(r)
-#         print(io, "0")
-#         return
-#     end
+    first = f
+    for (word, coeff) in w.terms
+        # ±の表示
+        if first
+            first = false
+            if coeff == Clong(-1)
+                print(io, "- ")
+            elseif coeff == Culong(1)
+                if isempty(word)
+                    print(io, coeff_to_str(coeff), "")
+                end
+            else
+                print(io, coeff_to_str(coeff), "")
+            end
+        else
+            if coeff < 0
+                print(io, " - ")
+                coeff = -coeff
+            else
+                print(io, " + ")
+            end
+            if coeff != Culong(1) || isempty(word)
+                print(io, coeff_to_str(coeff), "")
+            end
+        end
 
-#     degs = sort(collect(keys(r.terms)),rev=true)
+        print(io, word_to_str(word) )
+    end
+end
+function show(io::IO, ::MIME"text/plain", r::RegHoffman)
+    if iszero(r)
+        print(io, "0")
+        return
+    end
+    degs = sort(collect(keys(r.terms)), rev=true)
 
-#     for d in degs
+    Sg = ""
+    first = true
+    for d in degs
+        ch = r.terms[d]
+        if d == 0
+            print(io, Sg)
+            show(io, MIME("text/plain"), ch)
+            Sg = " + "
+            continue
+        else
+            if is_monomial(ch)
+                naturalshow(io,ch,first)
+            else
+                print(io, Sg, "(")
+                show(io, MIME("text/plain"), ch)
+                print(io, ")")
+            end
+        end
+        Sg = " + "
+        if d == 1
+            print(io, " T")
+        else
+            print(io, " T^",d)
+        end
+        first = false
+    end
+end
+show(io::IO, r::RegHoffman) = show(io, MIME("text/plain"), r)
+function sortedprint(r::RegHoffman)
+    if iszero(r)
+        println("RegHoffman with no entry:")
+        println("    0")
+        return
+    end
+
+    number_space = 0
+    degs = sort(collect(keys(r.terms)),rev=true)
+    for (d,ch) in r.terms
+        coeffs = values(ch.terms)
+        max_coeff = maximum(t-> ndigits(t.den)+ndigits(t.num),coeffs)
+        number_space = max(max_coeff+3,number_space)
+    end
+
+    if length(r.terms) == 1
+        println("RegHoffman with 1 entry:")
+    else
+        println("RegHoffman with $(length(r.terms)) entries:")
+    end
+
+    for d in degs
+        println("T^",d,":")
+        ch = r.terms[d]
+        # Hoffman の流用
+        words = keys(ch.terms)
         
-#     end
+        sorted_word = sort(collect(words); by = t -> (length(t), t))
 
-#     first = true
-#     for (word, coeff) in w.terms
-#         # ±の表示
-#         if first
-#             first = false
-#             if coeff == Clong(-1)
-#                 print(io, "- ")
-#             elseif coeff == Culong(1)
-#                 if isempty(word)
-#                     print(io, coeff_to_str(coeff))
-#                 end
-#             else
-#                 print(io, coeff_to_str(coeff), " ")
-#             end
-#         else
-#             if coeff < 0
-#                 print(io, " - ")
-#                 coeff = -coeff
-#             else
-#                 print(io, " + ")
-#             end
-#             if coeff != 1//1
-#                 print(io, coeff_to_str(coeff), " ")
-#             end
-#         end
-
-#         print(io, word_to_str(word) )
-#     end
-# end
+        for wo in sorted_word
+            c = coeff_to_str(ch.terms[wo])
+            println(lpad(c,number_space)," ",word_to_str(wo))
+        end
+    end
+end

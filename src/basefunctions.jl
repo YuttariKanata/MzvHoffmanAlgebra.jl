@@ -96,13 +96,7 @@ end
     return _String_to_Operator_Table[t[1]](t[2])
 end
 
-#=
-↑^n * ↓^m
-などは ↑^(n-m)
-となる
-→^n * -^m
-は n>m なら →^(n-m) n<mなら -^(m-n) n=mなら なし
-=#
+
 @inline function append_clean!(op::Operator, vn::Vector{<:AbstractOp})::Operator
 
     vnl = lastindex(vn)
