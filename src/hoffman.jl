@@ -778,24 +778,47 @@ end
 function monomial_hof_dual_h(w::Word)::Word
     lw = lastindex(w)
     if lw == 0
-        return w
+        return Word()
     end
     return Word(2) * Word(Tuple(3-i for i in w[2:lw]))
 end
+function monomial_hof_dual_h_r(w::Word)::Word
+    lw = lastindex(w)
+    if lw == 0
+        return Word()
+    end
+    return Word(Tuple(3-i for i in w[1:lw-1])) * Word(2)
+end
 function Hoffman_dual(w::Hoffman)::Hoffman
     s = Hoffman()
-    for (mw,cw) in w.terms
-        mwd = monomial_hof_dual_h(mw)
-        if haskey(s.terms,mwd)
-            if s.terms[mwd] == -cw
-                delete!(s.terms,mwd)
+    if get_index_orientation()
+        for (mw,cw) in w.terms
+            mwd = monomial_hof_dual_h(mw)
+            if haskey(s.terms,mwd)
+                if s.terms[mwd] == -cw
+                    delete!(s.terms,mwd)
+                else
+                    s.terms[mwd] += cw
+                end
             else
-                s.terms[mwd] += cw
+                s.terms[mwd] = cw
             end
-        else
-            s.terms[mwd] = cw
+        end
+    else
+        for (mw,cw) in w.terms
+            mwd = monomial_hof_dual_h_r(mw)
+            if haskey(s.terms,mwd)
+                if s.terms[mwd] == -cw
+                    delete!(s.terms,mwd)
+                else
+                    s.terms[mwd] += cw
+                end
+            else
+                s.terms[mwd] = cw
+            end
         end
     end
+
     return s
 end
 function monomial_hof_dual_i(w::Word)::Word
@@ -809,6 +832,19 @@ function monomial_hof_dual_i(w::Word)::Word
     end
     return Word(v)
 end
+# 実は等価
+function monomial_hof_dual_i_r(w::Word)::Word
+    lw = lastindex(w)
+    l = sum(w) - lw + 1
+    v = ones(Int,l)
+    cid = 1
+    for i in 1:lw-1
+        cid += w[i]-1
+        v[cid] += 1
+    end
+    return Word(v)
+end
+# monomial_hof_dual_i と monomial_hof_dual_i_r が等価なので↓は場合分けしなくてよい
 function Hoffman_dual(idx::Index)::Index
     s = Index()
     for (mw,cw) in idx.terms
@@ -830,20 +866,37 @@ end
 function monomial_Landen(w::Word)::Hoffman
     s = one(Hoffman)
     c1 = y+x
-    c2 = -HoffmanWordtoHoffman(y)
     for i in 1:lastindex(w)
         if w[i] == 1
-            s = s * c1
+            s = s*c1
         else
-            s = s * c2
+            s = -(s*y)
+        end
+    end
+    return s
+end
+function monomial_Landen_r(w::Word)::Hoffman
+    s = one(Hoffman)
+    c1 = y+x
+    for i in lastindex(w):-1:1
+        if w[i] == 1
+            s = c1*s
+        else
+            s = -(y*s)
         end
     end
     return s
 end
 function Landen_dual(w::Hoffman)::Hoffman
     s = Hoffman()
-    for (mw,cw) in w.terms
-        add!(s,monomial_Landen(mw),cw)
+    if get_index_orientation()
+        for (mw,cw) in w.terms
+            add!(s,monomial_Landen(mw),cw)
+        end
+    else
+        for (mw,cw) in w.terms
+            add!(s,monomial_Landen(mw),cw)
+        end
     end
     return s
 end

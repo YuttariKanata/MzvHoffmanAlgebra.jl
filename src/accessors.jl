@@ -154,8 +154,12 @@ end
 
 function getproperty(w::Word, sym::Symbol)
     if sym == :toindex
-        return idxdprs(collect(w))
-    elseif sym == :toword
+        if get_index_orientation()
+            return idxdprs(collect(w))
+        else
+            return idxdprs_r(collect(w))
+        end
+    elseif sym == :tohoffman
         if get_index_orientation()
             return Word(idxprs(w))
         else
