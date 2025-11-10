@@ -2,7 +2,7 @@
 
 # This file defines arithmetic functions
 
-import Base: +, -, *, ^
+import Base: +, -, *, ^, //
 
 #=
 export shift_degree, add!
@@ -683,4 +683,47 @@ function add!(h::Index,w::Index,c::Union{Rational,Integer} = Rational(BigInt(1))
             h.terms[ww] = wc*c
         end
     end
+end
+
+############################# DIVISION for NN ##############################
+########## NN ##########
+# NN Word
+function //(b::Word, a::NN)::Hoffman
+    r = Hoffman()
+    r.terms[b] = 1//a
+    return r
+end
+
+# NN Hoffman
+function //(b::Hoffman, a::NN)::Hoffman
+    r = Hoffman()
+    for (w, c) in b.terms
+        r.terms[w] = c//a
+    end
+    return r
+end
+
+# NN MonoIndex
+function //(b::MonoIndex, a::NN)::Index
+    r = Index()
+    r.terms[b.word] = b.coeff//a
+    return r
+end
+
+# NN Index
+function //(b::Index, a::NN)::Index
+    r = Index()
+    for (w, c) in b.terms
+        r.terms[w] = c//a
+    end
+    return r
+end
+
+# NN RegHoffman
+function //(b::RegHoffman, a::NN)::RegHoffman
+    r = RegHoffman()
+    for (d, h) in b.terms
+        r.terms[d] = h // a
+    end 
+    return r
 end

@@ -149,6 +149,9 @@ const _INDEX_ORIENTATION = Base.RefValue{Bool}(true)
 set_index_orientation!(val::Bool) = (_INDEX_ORIENTATION[] = val)
 get_index_orientation() = _INDEX_ORIENTATION[]
 
+# REPLで表示する項の数(目安)
+const _OMIT_COUNTS = 100
+
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
 mutable struct Hoffman <: ZetaExpr

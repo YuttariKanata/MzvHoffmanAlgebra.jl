@@ -200,7 +200,19 @@ Word(w::Word)::Word = w
 
 
 # [============== about Index ==============]
-function Index(c::NN,v::Vector{Int})::Index
+function Index(x::Int...)
+    idx = Index()
+    wv = Word(x)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
+function Index(v::Vector{Int})::Index
+    idx = Index()
+    wv = Word(v)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
+function Index(c::NN, v::Vector{Int})::Index
     idx = Index()
     wv = Word(v)
     idx.terms[wv] = c

@@ -895,7 +895,7 @@ function Landen_dual(w::Hoffman)::Hoffman
         end
     else
         for (mw,cw) in w.terms
-            add!(s,monomial_Landen(mw),cw)
+            add!(s,monomial_Landen_r(mw),cw)
         end
     end
     return s
@@ -903,3 +903,56 @@ end
 Landen_dual(idx::Word)::Word = Index(monomial_Landen(IndexWordtoHoffmanWord(idx)))
 Landen_dual(idx::Index)::Index = Index(Landen_dual(idx.toHoffman))
 
+
+#=
+# 正規化多項式
+
+
+# 右から1が最も多く続くIndexを返す
+# 同数なら全てを返す
+
+function rightmostones(i::Index)::Vector{Index}
+    maxlen = -1
+    winners = Vector{Tuple{Word,Rational{BigInt}}}()
+
+    # 辞書を一度だけ走査
+    for (w, c) in i.terms
+        # 末尾の1の連続数をカウント
+        cnt = 0
+        for x in lastindex(w.t):-1:1
+            w[x] == 1 ? (cnt += 1) : break
+        end
+
+        if cnt > maxlen
+            maxlen = cnt
+            empty!(winners)
+            push!(winners, (w, c))
+        elseif cnt == maxlen
+            push!(winners, (w, c))
+        end
+    end
+
+    # 結果をIndex型の配列に
+    res = Vector{Index}(undef, length(winners))
+    for (k, (w, c)) in enumerate(winners)
+        idx = Index()
+        idx.terms[w] = c
+        res[k] = idx
+    end
+    return res
+end
+#=
+[2,1,1]
+
+1. rightmostonesをする
+2. 各項に対してshuffle_product(後ろ,1,1,...)をする
+=#
+function stuffle_regularization_polynomial(w::Word)
+    if get_index_orientation()
+        if w[end] != 2
+            return w
+        end
+        s = Index()
+    end
+end
+=#

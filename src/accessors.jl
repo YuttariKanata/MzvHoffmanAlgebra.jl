@@ -153,18 +153,14 @@ function getproperty(w::Union{MonoIndex,Hoffman,Index}, sym::Symbol)
 end
 
 function getproperty(w::Word, sym::Symbol)
-    if sym == :toindex
-        if get_index_orientation()
-            return idxdprs(collect(w))
-        else
-            return idxdprs_r(collect(w))
-        end
-    elseif sym == :tohoffman
-        if get_index_orientation()
-            return Word(idxprs(w))
-        else
-            return Word(idxprs_r(w))
-        end
+    if sym == :HoftoIdx
+        return HoffmanWordtoIndex(w)
+    elseif sym == :IdxtoHof
+        return IndexWordtoHoffman(w)
+    elseif sym == :HoftoHof
+        return HoffmanWordtoHoffman(w)
+    elseif sym == :IdxtoIdx
+        return IndexWordtoIndex(w)
     elseif sym == :tovec
         return collect(Int64,w)
     elseif sym == :last
@@ -214,13 +210,24 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
     end
 
     first = true
-    for (word, coeff) in w.terms
+    lid = length(w.terms)
+    for (k, (word, coeff)) in enumerate(w.terms)
+        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
+            if k <= lid-30
+                if k == _OMIT_COUNTS
+                    printstyled("...[$(lid - _OMIT_COUNTS - 29) terms]...",color = 11)
+                end
+                continue
+            end
+        end
         # ±の表示
         if first
             first = false
-            if coeff == Clong(-1)
+            if coeff < Clong(0)
                 print(io, "- ")
-            elseif coeff == Culong(1)
+                coeff = -coeff
+            end
+            if coeff == Culong(1)
                 if isempty(word)
                     print(io, coeff_to_str(coeff), "")
                 end
@@ -242,7 +249,43 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
         print(io, word_to_str(word) )
     end
 end
-show(io::IO, w::Hoffman) = show(io, MIME("text/plain"), w)
+function show(io::IO, w::Hoffman)
+    if iszero(w)
+        print(io, "0")
+        return
+    end
+
+    first = true
+    for (word, coeff) in w.terms
+        # ±の表示
+        if first
+            first = false
+            if coeff < Clong(0)
+                print(io, "- ")
+                coeff = -coeff
+            end
+            if coeff == Culong(1)
+                if isempty(word)
+                    print(io, coeff_to_str(coeff), "")
+                end
+            else
+                print(io, coeff_to_str(coeff), "")
+            end
+        else
+            if coeff < 0
+                print(io, " - ")
+                coeff = -coeff
+            else
+                print(io, " + ")
+            end
+            if coeff != Culong(1) || isempty(word)
+                print(io, coeff_to_str(coeff), "")
+            end
+        end
+
+        print(io, word_to_str(word) )
+    end
+end
 function show(io::IO, ::MIME"text/plain", idx::Index)
     if iszero(idx)
         print(io, "0")
@@ -250,13 +293,24 @@ function show(io::IO, ::MIME"text/plain", idx::Index)
     end
 
     first = true
-    for (word, coeff) in idx.terms
+    lid = length(idx.terms)
+    for (k, (word, coeff)) in enumerate(idx.terms)
+        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
+            if k <= lid-30
+                if k == _OMIT_COUNTS
+                    printstyled("...[$(lid- _OMIT_COUNTS - 29) terms]...",color = 11)
+                end
+                continue
+            end
+        end
         # ±の表示
         if first
             first = false
-            if coeff == Clong(-1)
+            if coeff < Culong(0)
                 print(io, "- ")
-            elseif coeff == Culong(1)
+                coeff = -coeff
+            end
+            if coeff == Culong(1)
                 if isempty(word)
                     print(io, coeff_to_str(coeff), "")
                 end
@@ -280,7 +334,45 @@ function show(io::IO, ::MIME"text/plain", idx::Index)
         end
     end
 end
-show(io::IO, idx::Index) = show(io, MIME("text/plain"), idx)
+function show(io::IO, idx::Index)
+    if iszero(idx)
+        print(io, "0")
+        return
+    end
+
+    first = true
+    for (word, coeff) in idx.terms
+        # ±の表示
+        if first
+            first = false
+            if coeff < Culong(0)
+                print(io, "- ")
+                coeff = -coeff
+            end
+            if coeff == Culong(1)
+                if isempty(word)
+                    print(io, coeff_to_str(coeff), "")
+                end
+            else
+                print(io, coeff_to_str(coeff), "")
+            end
+        else
+            if coeff < 0
+                print(io, " - ")
+                coeff = -coeff
+            else
+                print(io, " + ")
+            end
+            if coeff != 1//1 || isempty(word)
+                print(io, coeff_to_str(coeff), "")
+            end
+        end
+
+        if !isempty(word)
+            print(io, "[", join(word,", "), "]" )
+        end
+    end
+end
 
 function sortedprint(w::Hoffman)
     if iszero(w)
