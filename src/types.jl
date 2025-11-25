@@ -5,7 +5,7 @@
 #=
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
        MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
-       ShuffleForm, HarmonicForm, MPLCombination, RegHoffman
+       ShuffleForm, HarmonicForm, MPLCombination, Poly, T
 =#
 
 
@@ -107,8 +107,8 @@ end
 #  │    ├─ ZetaExpr (abstract)
 #  │    │    ├─ Hoffman
 #  │    │    ├─ Index
-#  │    │    └─ MonoIndex
-#  │    │       (Word)
+#  │    │    ├─ MonoIndex
+#  │    │    └─ Word
 #  │    └─ HarmonicForm
 #  │
 #  └─ MPLCombination   # 有理数係数上の線形結合
@@ -134,7 +134,7 @@ const NN = Union{Integer,Rational}
 # WordのTupleの中身はimmutableなものにしておいてください！！！
 #const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
 # Wordの定義を上記から下記へ変更した このためにWordがTupleのようにふるまうインターフェースをbasefunctions.jlに書いた
-struct Word
+struct Word <: ZetaExpr
     t::Tuple{Vararg{Int}}
     function Word(w::Tuple{Vararg{Int}})
         new(w)
@@ -197,10 +197,33 @@ struct MPLCombination <: MPL
     terms::Dict{MPL,Rational{BigInt}}     # 異なる具象（Hoffman/EulerSum/ShuffleForm）も混在OK
 end
 
-# Hoffman型の値を係数とする多項式
-mutable struct RegHoffman
-    terms::Dict{Int,Hoffman}  # T のべき -> Hoffman 元の係数
-    function RegHoffman()
-        new(Dict{Int,Hoffman}())
+# # Hoffman型の値を係数とする多項式
+# mutable struct RegHoffman
+#     terms::Dict{Int,Hoffman}  # T のべき -> Hoffman 元の係数
+#     function RegHoffman()
+#         new(Dict{Int,Hoffman}())
+#     end
+# end
+# 
+# # Index型の値を係数とする多項式
+# mutable struct RegIndex
+#     terms::Dict{Int,Index}  # T のべき -> Index 元の係数
+#     function RegIndex()
+#         new(Dict{Int,Index}())
+#     end
+# end
+
+# 多項式一つで済ます
+mutable struct Poly{A}
+    terms::Dict{Int,A}
+
+    function Poly{A}() where {A}
+        new(Dict{Int,A}())
+    end
+
+    function Poly{A}(dic::Dict{Int,A}) where {A}
+        new(dic)
     end
 end
+
+const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}(Dict{Int,Rational{BigInt}}( Rational(BigInt(1)) => Rational(BigInt(1)) ))

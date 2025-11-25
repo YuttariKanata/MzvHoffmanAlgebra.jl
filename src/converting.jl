@@ -7,7 +7,7 @@ export HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
        IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
        HoffmanWordtoIndex, IndexWordtoIndex,
        HoffmanWordtoHoffman, IndexWordtoHoffman,
-       x, y, T
+       x, y
 =#
 
 """
@@ -330,27 +330,64 @@ end
 # TODO: Hoffman for hrm shf mpl
 
 
-# [============== about RegHoffman ==============]
-const T = let
-    t = RegHoffman()
-    t.terms[1] = one(Hoffman)
-    t
-end
-function RegHoffman(w::Hoffman)::RegHoffman
-    r = RegHoffman()
+# [============== about Poly ==============]
+
+# 汎用
+function Poly(w::A)::Poly{A} where A
+    r = Poly{A}()
     r.terms[1] = w
     return r
 end
-function RegHoffman(w::Word)::RegHoffman
-    r = RegHoffman()
+
+# 特殊な場合
+function Poly(w::Word)::Poly{Hoffman}
+    r = Poly{Hoffman}()
     r.terms[1] = HoffmanWordtoHoffman(w)
     return r
 end
-
-RegHoffman(r::RegHoffman)::RegHoffman = r
-function RegHoffman(a::NN)::RegHoffman
-    r = RegHoffman()
-    r.terms[0] = Hoffman(a)
+function Poly(m::MonoIndex)::Poly{Index}
+    r = Poly{Index}()
+    r.terms[1] = Index(m)
     return r
 end
-# TODO: RegHoffman for hrm shf mpl
+function Poly(a::NN)::Poly{Rational{BigInt}}
+    r = Poly{Rational{BigInt}}()
+    r.terms[0] = a
+    return r
+end
+
+# 自己
+Poly(r::Poly{A})::Poly{A} where A = r
+
+# 相互
+function Hoffman(a::Poly{Index})::Poly{Hoffman}
+    r = Poly{Hoffman}()
+    for (d,c) in a.terms
+        r[d] = Hoffman(c)
+    end
+    return r
+end
+function Index(a::Poly{Hoffman})::Poly{Index}
+    r = Poly{Index}()
+    for (d,c) in a.terms
+        r[d] = Index(c)
+    end
+    return r
+end
+function Hoffman(a::Poly{Rational{BigInt}})::Poly{Hoffman}
+    r = Poly{Hoffman}()
+    for (d,c) in a.terms
+        r[d] = Hoffman(c)
+    end
+    return r
+end
+function Index(a::Poly{Rational{BigInt}})::Poly{Index}
+    r = Poly{Index}()
+    for (d,c) in a.terms
+        r[d] = Index(c)
+    end
+    return r
+end
+
+# TODO: Poly for hrm shf mpl
+

@@ -42,28 +42,25 @@ module MzvHoffmanAlgebra
        # types.jl
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
        MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
-       ShuffleForm, HarmonicForm, MPLCombination, RegHoffman,
+       ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
        # basefunctions.jl
-       is_monomial, is_monoindex, is_hoffman, is_index,
+       is_monomial, is_hoffman, is_index, is_monoindex,
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,
        # converting.jl
        HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
        IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
        HoffmanWordtoIndex, IndexWordtoIndex,
        HoffmanWordtoHoffman, IndexWordtoHoffman,
-       x, y, T,
+       x, y,
        # arithmetic.jl
        shift_degree, add!,
        # hoffman.jl
-       monomial_sh, monomial_st, monomial_st_star, monomial_sh_double, monomial_st_double, monomial_st_star_double,
        shuffle_product, stuffle_product, star_stuffle_product, 
        shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
-       Hoffman_hom, Hoffman_antihom, monomial_sw_w, starword_to_word,
-       monomial_dual_h, monomial_dual_i, dual,
-       monomial_hof_dual_h, monomial_hof_dual_i, Hoffman_dual,
-       monomial_Landen, Landen_dual,
+       Hoffman_hom, Hoffman_antihom, starword_to_word,
+       dual, Hoffman_dual, Landen_dual
        # accessors.jl
        upper_represent, sortedprint,
        # operator.jl

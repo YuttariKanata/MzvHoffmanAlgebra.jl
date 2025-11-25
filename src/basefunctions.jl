@@ -2,10 +2,10 @@
 
 # This file defines the basic functions
 import Base: iszero, isone, zero, one, copy, ==, lastindex
-import Base: getindex, length, iterate, firstindex, eltype, isempty, copy, collect, Tuple, vcat, hcat, reverse, ==, hash, one, iterate, show, isless, isequal, in, convert
+import Base: getindex, length, iterate, firstindex, eltype, isempty, copy, collect, Tuple, vcat, hcat, reverse, ==, hash, isless, isequal, convert, in, iterate
 
 #=
-export is_monomial, is_monoindex, is_hoffman, is_index,
+export is_monomial, is_hoffman, is_index, is_monoindex,
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr
 =#
 
@@ -263,9 +263,9 @@ eltype(::Type{Word}) = ExprInt
 isempty(w::Word) = isempty(w.t)
 
 # ===== 各種操作互換 =====
-copy(w::Word) = Word(w.t)                               # コピー
+@inline copy(w::Word) = Word(w.t)                       # コピー
 collect(w::Word) = collect(w.t)                         # Vector化
-Tuple(w::Word) = w.t                                   # タプル化
+Tuple(w::Word) = w.t                                    # タプル化
 vcat(a::Word, b::Word) = Word((a.t..., b.t...))         # 連結
 hcat(a::Word, b::Word) = Word((a.t..., b.t...))
 reverse(w::Word) = Word(reverse(w.t))                   # 反転
@@ -276,8 +276,8 @@ isequal(a::Word, b::Word) = isequal(a.t, b.t)
 convert(::Type{Word}, t::Tuple)::Word = Word(t)
 
 # ===== スプラット互換 (a... が動くように) =====
-iterate(w::Word) = iterate(w.t)  # ←これが超重要！
 in(item, w::Word) = in(item, w.t)
+iterate(w::Word) = iterate(w.t)  # ←これが超重要！
 
 
 
@@ -292,7 +292,7 @@ iszero(w::Hoffman)::Bool          = isempty(w.terms)
 #iszero(hrm::HarmonicForm)::Bool   =  # TODO
 #iszero(shf::ShuffleForm)::Bool    =  # TODO
 #iszero(mpl::MPLCombination)::Bool =  # TODO
-iszero(r::RegHoffman)::Bool       = isempty(r.terms)
+iszero(r::Poly)::Bool             = isempty(r.terms)
 
 isone(w::Word)::Bool             = w == Word()
 isone(x::Index)::Bool            = length(x.terms) == 1 && haskey(x.terms,Word()) && isone(x.terms[Word()])
@@ -301,14 +301,15 @@ isone(w::Hoffman)::Bool          = length(w.terms) == 1 && haskey(w.terms,Word()
 #isone(hrm::HarmonicForm)::Bool   =  # TODO
 #isone(shf::ShuffleForm)::Bool    =  # TODO
 #isone(mpl::MPLCombination)::Bool =  # TODO
-isone(r::RegHoffman)::Bool       = length(r.terms) == 1 && haskey(r.terms,0) && isone(r.terms[0])
+isone(r::Poly)::Bool             = length(r.terms) == 1 && haskey(r.terms,0) && isone(r.terms[0])
 
-==(a::Index,b::Index)::Bool           = a.terms == b.terms
-==(a::MonoIndex,b::MonoIndex)::Bool   = a.word == b.word && a.coeff == b.coeff
-==(a::Hoffman,b::Hoffman)::Bool       = a.terms == b.terms
-==(a::RegHoffman,b::RegHoffman)::Bool = a.terms == b.terms
+==(a::Index,b::Index)::Bool         = a.terms == b.terms
+==(a::MonoIndex,b::MonoIndex)::Bool = a.word == b.word && a.coeff == b.coeff
+==(a::Hoffman,b::Hoffman)::Bool     = a.terms == b.terms
+==(a::Poly,b::Poly)::Bool           = a.terms == b.terms
 
-zero(::Type{T}) where T <: Union{Index,Hoffman,HarmonicForm,ShuffleForm,MPLCombination} = T()
+zero(::Type{T})::T where T <: Union{Index,Hoffman,HarmonicForm,ShuffleForm,MPLCombination} = T()
+zero(::Type{Poly{A}}) where A = Poly{A}()
 one(::Type{Word})::Word = Word()
 one(::Type{MonoIndex})::MonoIndex = MonoIndex(Word(),1)
 function one(::Type{Index})::Index
@@ -321,9 +322,9 @@ function one(::Type{Hoffman})::Hoffman
     w.terms[Word()] = 1
     return  w
 end
-function one(::Type{RegHoffman})::RegHoffman
-    r = RegHoffman()
-    r.terms[0] = one(Hoffman)
+function one(::Type{Poly{A}})::Poly{A} where A
+    r = Poly{A}()
+    r.terms[0] = one(A)
     return r
 end
 # TODO: one for hrm shf mpl
@@ -331,10 +332,10 @@ end
 is_monomial(x::Index)::Bool                 = isone(length(x.terms))
 is_monomial(w::Hoffman)::Bool               = isone(length(w.terms))
 is_monomial(w::Union{Word,MonoIndex})::Bool = true
-#is_monomial(hrm::HarmonicForm)::Bool      = # TODO
-#is_monomial(shf::ShuffleForm)::Bool       = # TODO
-#is_monomial(mpl::MPLCombination)::Bool    = # TODO
-is_monoindex(r::RegHoffman)::Bool           = isone(length(r.terms))
+#is_monomial(hrm::HarmonicForm)::Bool        = # TODO
+#is_monomial(shf::ShuffleForm)::Bool         = # TODO
+#is_monomial(mpl::MPLCombination)::Bool      = # TODO
+is_monomial(r::Poly)::Bool                 = isone(length(r.terms))
 
 is_hoffman(x::MPL)::Bool        = typeof(x) == Hoffman
 is_index(x::MPL)::Bool          = typeof(x) == Index
@@ -425,8 +426,8 @@ end
     end
     return r
 end
-@inline function copy(p::RegHoffman)::RegHoffman
-    r = RegHoffman()
+@inline function copy(p::Poly{A})::Poly{A} where A
+    r = Poly{A}()
     for (deg,h) in p.terms
         r.terms[deg] = copy(h)
     end

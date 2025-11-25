@@ -172,7 +172,7 @@ function getproperty(w::Word, sym::Symbol)
     end
 end
 
-function getproperty(r::RegHoffman, sym::Symbol)
+function getproperty(r::Poly, sym::Symbol)
     if sym == :sortshow
         sortedprint(r)
     else
@@ -200,6 +200,9 @@ end
     end
     return s
 end
+
+# show (Word, Hoffman Index)
+
 function show(io::IO, ::MIME"text/plain", w::Word)
     show(io, MIME("text/plain"), w.t)
 end
@@ -374,6 +377,8 @@ function show(io::IO, idx::Index)
     end
 end
 
+# sortedprint (Hoffman, Index)
+
 function sortedprint(w::Hoffman)
     if iszero(w)
         println("Hoffman with no entry:")
@@ -424,6 +429,9 @@ function sortedprint(idx::Index)
         println(lpad(c,number_space)," [",join(wo,", "),"]")
     end
 end
+
+# naturalshow (Hoffman, Index)
+
 function naturalshow(io::IO, w::Hoffman, f::Bool)
     if iszero(w)
         print(io, "0")
@@ -437,6 +445,9 @@ function naturalshow(io::IO, w::Hoffman, f::Bool)
             first = false
             if coeff == Clong(-1)
                 print(io, "- ")
+                if isempty(word)
+                    print(io, coeff_to_str(-coeff), "")
+                end
             elseif coeff == Culong(1)
                 if isempty(word)
                     print(io, coeff_to_str(coeff), "")
@@ -459,9 +470,102 @@ function naturalshow(io::IO, w::Hoffman, f::Bool)
         print(io, word_to_str(word) )
     end
 end
-function show(io::IO, ::MIME"text/plain", r::RegHoffman)
+function naturalshow(io::IO, w::Index, f::Bool)
+    if iszero(w)
+        print(io, "0")
+        return
+    end
+
+    first = f
+    for (word, coeff) in w.terms
+        # ±の表示
+        if first
+            first = false
+            if coeff == Clong(-1)
+                print(io, "- ")
+                if isempty(word)
+                    print(io, coeff_to_str(-coeff), "")
+                end
+            elseif coeff == Culong(1)
+                if isempty(word)
+                    print(io, coeff_to_str(coeff), "")
+                end
+            else
+                print(io, coeff_to_str(coeff), "")
+            end
+        else
+            if coeff < 0
+                print(io, " - ")
+                coeff = -coeff
+            else
+                print(io, " + ")
+            end
+            if coeff != Culong(1) || isempty(word)
+                print(io, coeff_to_str(coeff), "")
+            end
+        end
+
+        print(io, "[", join(word,", "), "]" )
+    end
+end
+function naturalshow(io::IO, r::Poly{Rational{BigInt}})
     if iszero(r)
         print(io, "0")
+        return
+    end
+
+    first = true
+    degs = sort(collect(keys(r.terms)), rev=true)
+    for d in degs
+        coeff = r.terms[d]
+        if first
+            first = false
+            if coeff == Clong(-1)
+                print(io, "- ")
+                if d == 0
+                    print(io, coeff_to_str(-coeff), "")
+                end
+            elseif coeff == Clong(1)
+                if d == 0
+                    print(io, coeff_to_str(coeff), "")
+                end
+            else
+                print(io, coeff_to_str(coeff), "")
+            end
+        else
+            if coeff < 0
+                print(io, " - ")
+                coeff = -coeff
+            else
+                print(io, " + ")
+            end
+            if coeff != Culong(1) || d == 0
+                print(io, coeff_to_str(coeff), "")
+            end
+        end
+
+        if d > 1
+            print(io, "T^", d)
+        elseif d == 1
+            print(io, "T")
+        end
+    end
+end
+
+# show, sortedprint (Poly)
+
+function show(io::IO, ::MIME"text/plain", r::Poly{A}) where A
+    if !(A === Hoffman || A === Index || A === Rational{BigInt})
+        @warn "Poly{$A}に対するshowはまだ未実装です。"
+        println(r)
+        return
+    end
+    if iszero(r)
+        print(io, "0")
+        return
+    end
+    if A === Rational{BigInt}
+        naturalshow(io, r)
         return
     end
     degs = sort(collect(keys(r.terms)), rev=true)
@@ -469,20 +573,20 @@ function show(io::IO, ::MIME"text/plain", r::RegHoffman)
     Sg = ""
     first = true
     for d in degs
-        ch = r.terms[d]
+        ci = r.terms[d]
         if d == 0
             print(io, Sg)
-            show(io, MIME("text/plain"), ch)
+            show(io, MIME("text/plain"), ci)
             Sg = " + "
             continue
         else
-            if is_monomial(ch)
-                if !isone(ch)
-                    naturalshow(io,ch,first)
+            if is_monomial(ci)
+                if !isone(ci)
+                    naturalshow(io,ci,first)
                 end
             else
                 print(io, Sg, "(")
-                show(io, MIME("text/plain"), ch)
+                show(io, MIME("text/plain"), ci)
                 print(io, ")")
             end
         end
@@ -495,10 +599,15 @@ function show(io::IO, ::MIME"text/plain", r::RegHoffman)
         first = false
     end
 end
-show(io::IO, r::RegHoffman) = show(io, MIME("text/plain"), r)
-function sortedprint(r::RegHoffman)
+show(io::IO, r::Poly) = show(io, MIME("text/plain"), r)
+function sortedprint(r::Poly{A}) where A
+    if !(A === Hoffman || A === Index)
+        @warn "Poly{$A}に対するsortedshowはまだ未実装です。"
+        println(r)
+        return
+    end
     if iszero(r)
-        println("RegHoffman with no entry:")
+        println("Poly{$A} with no entry:")
         println("    0")
         return
     end
@@ -512,22 +621,38 @@ function sortedprint(r::RegHoffman)
     end
 
     if length(r.terms) == 1
-        println("RegHoffman with 1 entry:")
+        println("Poly{$A} with 1 entry:")
     else
-        println("RegHoffman with $(length(r.terms)) entries:")
+        println("Poly{$A} with $(length(r.terms)) entries:")
     end
 
-    for d in degs
-        println("T^",d,":")
-        ch = r.terms[d]
-        # Hoffman の流用
-        words = keys(ch.terms)
-        
-        sorted_word = sort(collect(words); by = t -> (length(t), t))
-
-        for wo in sorted_word
-            c = coeff_to_str(ch.terms[wo])
-            println(lpad(c,number_space)," ",word_to_str(wo))
+    if A === Hoffman
+        for d in degs
+            println("T^",d,":")
+            ch = r.terms[d]
+            # Hoffman の流用
+            words = keys(ch.terms)
+            
+            sorted_word = sort(collect(words); by = t -> (length(t), t))
+    
+            for wo in sorted_word
+                c = coeff_to_str(ch.terms[wo])
+                println(lpad(c,number_space)," ",word_to_str(wo))
+            end
+        end
+    elseif A === Index
+        for d in degs
+            println("T^",d,":")
+            ch = r.terms[d]
+            # Hoffman の流用
+            words = keys(ch.terms)
+            
+            sorted_word = sort(collect(words); by = t -> (length(t), t))
+    
+            for wo in sorted_word
+                c = coeff_to_str(ch.terms[wo])
+                println(lpad(c,number_space)," ","[", join(wo,", "), "]")
+            end
         end
     end
 end
