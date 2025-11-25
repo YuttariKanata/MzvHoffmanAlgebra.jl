@@ -375,7 +375,7 @@ end
 ########## Poly ##########
 
 # auxiliary function
-@inline function add!(r::Poly{A},b::ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
+@inline function add!(r::Poly{A},b::B)::Poly{A} where {A<:Union{Rational{BigInt},Hoffman,Index}, B<:Union{ZetaExpr,NN}}
     if haskey(r.terms,0)
         if r.terms[0] == -A(b)
             delete!(r.terms,0)
@@ -387,7 +387,7 @@ end
     end
     return r
 end
-@inline function subtract!(r::Poly{A},b::ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
+@inline function subtract!(r::Poly{A},b::B)::Poly{A} where {A<:Union{Rational{BigInt},Hoffman,Index}, B<:Union{ZetaExpr,NN}}
     if haskey(r.terms,0)
         if r.terms[0] == A(b)
             delete!(r.terms,0)
@@ -442,6 +442,7 @@ function +(a::Poly{Rational{BigInt}}, b::Poly{Rational{BigInt}})::Poly{Rational{
             else
                 r.terms[d] += c
             end
+        else
             r.terms[d] = c
         end
     end
@@ -456,14 +457,15 @@ function -(a::Poly{Rational{BigInt}}, b::Poly{Rational{BigInt}})::Poly{Rational{
             else
                 r.terms[d] -= c
             end
+        else
             r.terms[d] = -c
         end
     end
     return r
 end
 
-+(a::Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(b,a)
--(a::Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(-b,a)
++(a::NN,b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(b,a)
+-(a::NN,b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(-b,a)
 +(a::Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(b,a)
 -(a::Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(-b,a)
 +(a::Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = +(b,a)
@@ -493,6 +495,7 @@ function +(a::Poly{Hoffman}, b::Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Po
             else
                 r.terms[d] += c
             end
+        else
             r.terms[d] = Hoffman(c)
         end
     end
@@ -507,6 +510,7 @@ function -(a::Poly{Hoffman}, b::Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Po
             else
                 r.terms[d] -= c
             end
+        else
             r.terms[d] = -Hoffman(c)
         end
     end
@@ -542,6 +546,7 @@ function +(a::Poly{Index},b::Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{In
             else
                 r.terms[d] += c
             end
+        else
             r.terms[d] = Index(c)
         end
     end
@@ -556,6 +561,7 @@ function -(a::Poly{Index},b::Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{In
             else
                 r.terms[d] -= c
             end
+        else
             r.terms[d] = -Index(c)
         end
     end
