@@ -60,7 +60,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
-       dual, Hoffman_dual, Landen_dual
+       dual, Hoffman_dual, Landen_dual,
        # accessors.jl
        upper_represent, sortedprint,
        # operator.jl
