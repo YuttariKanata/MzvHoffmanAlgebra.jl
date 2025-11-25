@@ -308,8 +308,13 @@ isone(r::Poly)::Bool             = length(r.terms) == 1 && haskey(r.terms,0) && 
 ==(a::Hoffman,b::Hoffman)::Bool     = a.terms == b.terms
 ==(a::Poly,b::Poly)::Bool           = a.terms == b.terms
 
-zero(::Type{T})::T where T <: Union{Index,Hoffman,HarmonicForm,ShuffleForm,MPLCombination} = T()
-zero(::Type{Poly{A}}) where A = Poly{A}()
+zero(::Type{Index})::Index = Index()
+zero(::Type{Hoffman})::Hoffman = Hoffman()
+zero(::Type{HarmonicForm})::HarmonicForm = HarmonicForm()
+zero(::Type{ShuffleForm})::ShuffleForm = ShuffleForm()
+function zero(::Type{Poly{A}})::Poly{A} where A
+    return Poly{A}()
+end
 one(::Type{Word})::Word = Word()
 one(::Type{MonoIndex})::MonoIndex = MonoIndex(Word(),1)
 function one(::Type{Index})::Index

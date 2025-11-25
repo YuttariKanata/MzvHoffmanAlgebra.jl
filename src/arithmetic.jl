@@ -375,7 +375,7 @@ end
 ########## Poly ##########
 
 # auxiliary function
-@inline function add!(r::Poly{A},b<:ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
+@inline function add!(r::Poly{A},b::ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
     if haskey(r.terms,0)
         if r.terms[0] == -A(b)
             delete!(r.terms,0)
@@ -387,7 +387,7 @@ end
     end
     return r
 end
-@inline function subtract!(r::Poly{A},b<:ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
+@inline function subtract!(r::Poly{A},b::ZetaExpr)::Poly{A} where A<:Union{NN,Hoffman,Index}
     if haskey(r.terms,0)
         if r.terms[0] == A(b)
             delete!(r.terms,0)
@@ -413,21 +413,21 @@ function -(a::Poly{Rational{BigInt}}, b::NN)::Poly{Rational{BigInt}}
 end
 
 # Poly NN , (Word, Hoffman)
-function +(a::Poly{Rational{BigInt}}, b<:Union{Word,Hoffman})::Poly{Hoffman}
+function +(a::Poly{Rational{BigInt}}, b::Union{Word,Hoffman})::Poly{Hoffman}
     r = Hoffman(a)
     return add!(r,b)
 end
-function -(a::Poly{Rational{BigInt}}, b<:Union{Word,Hoffman})::Poly{Hoffman}
+function -(a::Poly{Rational{BigInt}}, b::Union{Word,Hoffman})::Poly{Hoffman}
     r = Hoffman(a)
     return subtract!(r,b)
 end
 
 # Poly NN , (MonoIndex, Index)
-function +(a::Poly{Rational{BigInt}}, b<:Union{MonoIndex,Index})::Poly{Index}
+function +(a::Poly{Rational{BigInt}}, b::Union{MonoIndex,Index})::Poly{Index}
     r = Index(a)
     return add!(r,b)
 end
-function -(a::Poly{Rational{BigInt}}, b<:Union{MonoIndex,Index})::Poly{Index}
+function -(a::Poly{Rational{BigInt}}, b::Union{MonoIndex,Index})::Poly{Index}
     r = Index(a)
     return subtract!(r,b)
 end
@@ -462,29 +462,29 @@ function -(a::Poly{Rational{BigInt}}, b::Poly{Rational{BigInt}})::Poly{Rational{
     return r
 end
 
-+(a<:Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(b,a)
--(a<:Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(-b,a)
-+(a<:Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(b,a)
--(a<:Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(-b,a)
-+(a<:Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = +(b,a)
--(a<:Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = +(-b,a)
++(a::Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(b,a)
+-(a::Union{NN,Poly{Rational{BigInt}}},b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}} = +(-b,a)
++(a::Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(b,a)
+-(a::Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = +(-b,a)
++(a::Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = +(b,a)
+-(a::Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = +(-b,a)
 
 
 
 ########## Poly Hoffman ##########
 
 # Poly Hof , (NN, Word, Hoffman)
-function +(a::Poly{Hoffman}, b<:Union{NN,Word,Hoffman})::Poly{Hoffman}
+function +(a::Poly{Hoffman}, b::Union{NN,Word,Hoffman})::Poly{Hoffman}
     r = copy(a)
     return add!(r,b)
 end
-function -(a::Poly{Hoffman}, b<:Union{NN,Word,Hoffman})::Poly{Hoffman}
+function -(a::Poly{Hoffman}, b::Union{NN,Word,Hoffman})::Poly{Hoffman}
     r = copy(a)
     return subtract!(r,b)
 end
 
 # Poly Hof , (Poly NN, Poly Hof)
-function +(a::Poly{Hoffman}, b<:Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Poly{Hoffman}
+function +(a::Poly{Hoffman}, b::Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Poly{Hoffman}
     r = copy(a)
     for (d,c) in b.terms
         if haskey(r.terms,d)
@@ -498,7 +498,7 @@ function +(a::Poly{Hoffman}, b<:Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Po
     end
     return r
 end
-function -(a::Poly{Hoffman}, b<:Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Poly{Hoffman}
+function -(a::Poly{Hoffman}, b::Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Poly{Hoffman}
     r = copy(a)
     for (d,c) in b.terms
         if haskey(r.terms,d)
@@ -513,27 +513,27 @@ function -(a::Poly{Hoffman}, b<:Union{Poly{Rational{BigInt}},Poly{Hoffman}})::Po
     return r
 end
 
-+(a<:Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
--(a<:Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
-+(a<:Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
--(a<:Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
++(a::Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
+-(a::Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
++(a::Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
+-(a::Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
 
 
 
 ########## Poly Index ##########
 
 # Poly{Index} , (NN,MonoIndex,Index)
-function +(a::Poly{Index},b<:Union{NN,MonoIndex,Index})::Poly{Index}
+function +(a::Poly{Index},b::Union{NN,MonoIndex,Index})::Poly{Index}
     r = copy(a)
     return add!(r,b)
 end
-function -(a::Poly{Index},b<:Union{NN,MonoIndex,Index})::Poly{Index}
+function -(a::Poly{Index},b::Union{NN,MonoIndex,Index})::Poly{Index}
     r = copy(a)
     return subtract!(r,b)
 end
 
 # Poly{Index} , (Poly{Rational{BigInt}}, Poly{Index})
-function +(a::Poly{Index}, b<:Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{Index}
+function +(a::Poly{Index},b::Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{Index}
     r = copy(a)
     for (d,c) in b.terms
         if haskey(r.terms,d)
@@ -547,7 +547,7 @@ function +(a::Poly{Index}, b<:Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{I
     end
     return r
 end
-function -(a::Poly{Index}, b<:Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{Index}
+function -(a::Poly{Index},b::Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{Index}
     r = copy(a)
     for (d,c) in b.terms
         if haskey(r.terms,d)
@@ -562,10 +562,10 @@ function -(a::Poly{Index}, b<:Union{Poly{Rational{BigInt}},Poly{Index}})::Poly{I
     return r
 end
 
-+(a<:Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(b,a)
--(a<:Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(-b,a)
-+(a<:Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(b,a)
--(a<:Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(-b,a)
++(a::Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(b,a)
+-(a::Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(-b,a)
++(a::Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(b,a)
+-(a::Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(-b,a)
 
 
 
@@ -720,24 +720,24 @@ end
 *(a::Poly{Rational{BigInt}}, b::NN)::Poly{Rational{BigInt}} = *(b,a)
 
 # Poly NN , (Word, Hoffman)
-function *(a::Poly{Rational{BigInt}}, b<:Union{Word,Hoffman})::Poly{Hoffman}
+function *(a::Poly{Rational{BigInt}}, b::Union{Word,Hoffman})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in a.terms
         r.terms[d] = c*b
     end
     return r
 end
-*(a<:Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = *(b,a)
+*(a::Union{Word,Hoffman},b::Poly{Rational{BigInt}})::Poly{Hoffman} = *(b,a)
 
 # Poly NN , (MonoIndex, Index)
-function *(a::Poly{Rational{BigInt}}, b<:Union{MonoIndex,Index})::Poly{Index}
+function *(a::Poly{Rational{BigInt}}, b::Union{MonoIndex,Index})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in a.terms
         r.terms[d] = c*b
     end
     return r
 end
-*(a<:Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = *(b,a)
+*(a::Union{MonoIndex,Index},b::Poly{Rational{BigInt}})::Poly{Index} = *(b,a)
 
 # Poly NN , Poly NN
 function normal_multiply_Poly(a::Poly{Rational{BigInt}}, b::Poly{Rational{BigInt}})::Poly{Rational{BigInt}}
@@ -787,14 +787,14 @@ end
 *(a::Poly{Hoffman}, b::NN)::Poly{Hoffman} = *(b,a)
 
 # Poly Hoffman , (Word, Hoffman)
-function *(a::Poly{Hoffman}, b<:Union{Word,Hoffman})::Poly{Hoffman}
+function *(a::Poly{Hoffman}, b::Union{Word,Hoffman})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in a.terms
         r.terms[d] = c*b
     end
     return r
 end
-function *(a<:Union{Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman}
+function *(a::Union{Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in b.terms
         r.terms[d] = a*c
@@ -884,14 +884,14 @@ end
 *(a::Poly{Index}, b::NN)::Poly{Index} = *(b,a)
 
 # Poly Index , (MonoIndex, Index)
-function *(a::Poly{Index}, b<:Union{MonoIndex,Index})::Poly{Index}
+function *(a::Poly{Index}, b::Union{MonoIndex,Index})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in a.terms
         r.terms[d] = c*b
     end
     return r
 end
-function *(a<:Union{MonoIndex,Index}, b::Poly{Index})::Poly{Index}
+function *(a::Union{MonoIndex,Index}, b::Poly{Index})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in b.terms
         r.terms[d] = a*c
@@ -1162,7 +1162,7 @@ function //(b::Index, a::NN)::Index
 end
 
 # NN Poly
-function //(b::Poly{A}, a::NN)::Poly{A}
+function //(b::Poly{A}, a::NN)::Poly{A} where A
     r = Poly{A}()
     for (d, h) in b.terms
         r.terms[d] = h // a

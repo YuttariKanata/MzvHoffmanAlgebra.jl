@@ -357,7 +357,9 @@ function Poly(a::NN)::Poly{Rational{BigInt}}
 end
 
 # 自己
-Poly(r::Poly{A})::Poly{A} where A = r
+function Poly(r::Poly{A})::Poly{A} where A
+    return r
+end
 
 # 相互
 function Hoffman(a::Poly{Index})::Poly{Hoffman}
