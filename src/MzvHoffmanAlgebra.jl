@@ -43,6 +43,7 @@ module MzvHoffmanAlgebra
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
        MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
        ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
+       set_index_orientation!, get_index_orientation,
        # basefunctions.jl
        is_monomial, is_hoffman, is_index, is_monoindex,
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,

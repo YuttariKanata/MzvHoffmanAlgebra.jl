@@ -5,7 +5,8 @@
 #=
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
        MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
-       ShuffleForm, HarmonicForm, MPLCombination, Poly, T
+       ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
+       set_index_orientation!, get_index_orientation
 =#
 
 
@@ -67,11 +68,11 @@ mutable struct OpDeriv <: AbstractOp
 end
 OpDeriv(n::Int) = OpDeriv(1,n)
 
-function (::Type{T})() where T <: AbstractOp
-    if T === OpDeriv
-        return T(1,1)
+function (::Type{A})() where A <: AbstractOp
+    if A === OpDeriv
+        return A(1,1)
     else
-        return T(1)
+        return A(1)
     end
 end
 
