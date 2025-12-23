@@ -647,9 +647,9 @@ function st_index1_pow(n::Int)::Index
     return idx
 end
 
-function sh_index1_pow(n::Int)::Hoffman
+function sh_y_pow(n::Int)::Hoffman
     h = Hoffman()
-    h.terms[Word(ones(Int,n))] = factorial(BigInt(n))
+    h.terms[Word(fill(2,n))] = factorial(BigInt(n))
     return h
 end
 
@@ -978,16 +978,16 @@ function rightmostones(i::Index)::Vector{MonoIndex}
     end
     return res
 end
-function rightmostones(h::Hoffman)::Vector{MonoIndex}
+function rightmostys(h::Hoffman)::Vector{MonoIndex}
     maxlen = -1
     winners = Vector{Tuple{Word,Rational{BigInt}}}()
 
     # 辞書を一度だけ走査
     for (w, c) in h.terms
-        # 末尾の1の連続数をカウント
+        # 末尾の2の連続数をカウント
         cnt = 0
         for x in lastindex(w.t):-1:1
-            w[x] == 1 ? (cnt += 1) : break
+            w[x] == 2 ? (cnt += 1) : break
         end
 
         if cnt > maxlen
@@ -1035,16 +1035,16 @@ function leftmostones(i::Index)::Vector{MonoIndex}
     end
     return res
 end
-function leftmostones(h::Hoffman)::Vector{MonoIndex}
+function leftmostys(h::Hoffman)::Vector{MonoIndex}
     maxlen = -1
     winners = Vector{Tuple{Word,Rational{BigInt}}}()
 
     # 辞書を一度だけ走査
     for (w, c) in h.terms
-        # 末尾の1の連続数をカウント
+        # 末尾の2の連続数をカウント
         cnt = 0
         for x in 1:lastindex(w.t)
-            w[x] == 1 ? (cnt += 1) : break
+            w[x] == 2 ? (cnt += 1) : break
         end
 
         if cnt > maxlen
@@ -1071,10 +1071,24 @@ function rightonesplit(w::Word)::Tuple{Word,Int}
     end
     return (w[1:end-cnt] , cnt)
 end
+function rightysplit(w::Word)::Tuple{Word,Int}
+    cnt = 0
+    for x in lastindex(w):-1:1
+        w[x] == 2 ? (cnt += 1) : break
+    end
+    return (w[1:end-cnt] , cnt)
+end
 function leftonesplit(w::Word)::Tuple{Word,Int}
     cnt = 0
     for x in 1:lastindex(w)
         w[x] == 1 ? (cnt += 1) : break
+    end
+    return (w[cnt+1:end] , cnt)
+end
+function leftysplit(w::Word)::Tuple{Word,Int}
+    cnt = 0
+    for x in 1:lastindex(w)
+        w[x] == 2 ? (cnt += 1) : break
     end
     return (w[cnt+1:end] , cnt)
 end
@@ -1148,24 +1162,24 @@ end
 
 function shuffle_regularization_polynomial(w::Word)
     if get_index_orientation()
-        if w[end] != 1  # xに相当する
+        if w[end] != 2  # xに相当する
             return Poly(HoffmanWordtoHoffman(w))
         end
         z = HoffmanWordtoHoffman(w)
         r = Poly{Hoffman}()
 
         while !iszero(z)    # z が0でない限り続ける
-            m = rightmostones(z)
+            m = rightmostys(z)
             zadd = Hoffman()
             mi_d = 0
             for mi in m
                 # zのうち右から続く1が一番多いものの集まりm
                 # mの一つ一つの1の続く部分(mi_d個)とそれ以外(mi_r)
-                mi_r, mi_d = rightonesplit(mi.word)
+                mi_r, mi_d = rightysplit(mi.word)
 
                 # mi_r ⟒ Hoffman(1)^{⟒mi_d} を計算
                 #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
-                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_index1_pow(mi_d))
+                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_y_pow(mi_d))
 
                 # 係数を合わせる
                 diffc = mi.coeff//mi_t.terms[mi.word]
@@ -1180,21 +1194,21 @@ function shuffle_regularization_polynomial(w::Word)
         end
         return r
     else
-        if w[1] != 1
+        if w[1] != 2
             return Poly(HoffmanWordtoHoffman(w))
         end
         z = HoffmanWordtoHoffman(w)
         r = Poly{Hoffman}()
         
         while !iszero(z)
-            m = leftmostones(z)
+            m = leftmostys(z)
             zadd = Hoffman()
             mi_d = 0
             for mi in m
-                mi_r, mi_d = leftonesplit(mi.word)
+                mi_r, mi_d = leftysplit(mi.word)
 
                 #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
-                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_index1_pow(mi_d))
+                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_y_pow(mi_d))
                 
                 diffc = mi.coeff//mi_t.terms[mi.word]
 
