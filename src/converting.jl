@@ -200,9 +200,15 @@ Word(w::Word)::Word = w
 
 
 # [============== about Index ==============]
-function Index(x::Int...)
+# function Index(x::Int...)
+#     idx = Index()
+#     wv = Word(x)
+#     idx.terms[wv] = Rational(BigInt(1))
+#     return idx
+# end
+function Index(t::Tuple{Vararg{Int}})::Index
     idx = Index()
-    wv = Word(x)
+    wv = Word(t)
     idx.terms[wv] = Rational(BigInt(1))
     return idx
 end
@@ -335,19 +341,19 @@ end
 # 汎用
 function Poly(w::A)::Poly{A} where A
     r = Poly{A}()
-    r.terms[1] = w
+    r.terms[0] = w
     return r
 end
 
 # 特殊な場合
 function Poly(w::Word)::Poly{Hoffman}
     r = Poly{Hoffman}()
-    r.terms[1] = HoffmanWordtoHoffman(w)
+    r.terms[0] = HoffmanWordtoHoffman(w)
     return r
 end
 function Poly(m::MonoIndex)::Poly{Index}
     r = Poly{Index}()
-    r.terms[1] = Index(m)
+    r.terms[0] = Index(m)
     return r
 end
 function Poly(a::NN)::Poly{Rational{BigInt}}
@@ -365,28 +371,28 @@ end
 function Hoffman(a::Poly{Index})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in a.terms
-        r[d] = Hoffman(c)
+        r.terms[d] = Hoffman(c)
     end
     return r
 end
 function Index(a::Poly{Hoffman})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in a.terms
-        r[d] = Index(c)
+        r.terms[d] = Index(c)
     end
     return r
 end
 function Hoffman(a::Poly{Rational{BigInt}})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in a.terms
-        r[d] = Hoffman(c)
+        r.terms[d] = Hoffman(c)
     end
     return r
 end
 function Index(a::Poly{Rational{BigInt}})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in a.terms
-        r[d] = Index(c)
+        r.terms[d] = Index(c)
     end
     return r
 end

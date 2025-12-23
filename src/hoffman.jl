@@ -7,8 +7,11 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
+       st_index1_pow, sh_index1_pow,
+       ⟒, ∗, ⋆,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
        dual, Hoffman_dual, Landen_dual
+       stuffle_regularization_polynomial, shuffle_regularization_polynomial
 =#
 
 """
@@ -136,7 +139,7 @@ function monomial_st_r(a::Vector{Int},b::Vector{Int})::Vector{Vector{Int}}
 
     h1[1] = [Int[]]
     for i in 1:la
-        h1[i+1] = [a[la+1-i,la]]
+        h1[i+1] = [a[la+1-i:la]]
     end
 
     for i in 1:lb
@@ -510,31 +513,17 @@ function shuffle_pow(a::Hoffman,n::Int)::Hoffman
     elseif n == 1
         return base
     end
-    
-    if get_index_orientation()
+
+    if n&1 == 1
+        r = shuffle_product(r,base)
+    end
+    n >>= 1
+    while n>0
+        base = shuffle_product_double(base)
         if n&1 == 1
             r = shuffle_product(r,base)
         end
-        n >>= 1
-        while n>0
-            base = shuffle_product_double(base)
-            if n&1 == 1
-                r = shuffle_product(r,base)
-            end
-            n>>=1
-        end
-    else
-        if n&1 == 1
-            r = shuffle_product(r,base)
-        end
-        n >>= 1
-        while n>0
-            base = shuffle_product_double(base)
-            if n&1 == 1
-                r = shuffle_product(r,base)
-            end
-            n>>=1
-        end
+        n>>=1
     end
 
     return r
@@ -595,7 +584,7 @@ function shpw(a::Hoffman,n::Int)::Hoffman
     if n==0
         return r
     else
-        return shuffle_product(sp(a,n-1),a)
+        return shuffle_product(shpw(a,n-1),a)
     end
 end
 function stpw(a::Index,n::Int)::Index
@@ -603,7 +592,7 @@ function stpw(a::Index,n::Int)::Index
     if n==0
         return r
     else
-        return stuffle_product(sp(a,n-1),a)
+        return stuffle_product(stpw(a,n-1),a)
     end
 end
 function starstpw(a::Index,n::Int)::Index
@@ -611,8 +600,57 @@ function starstpw(a::Index,n::Int)::Index
     if n==0
         return r
     else
-        return star_stuffle_product(sp(a,n-1),a)
+        return star_stuffle_product(starstpw(a,n-1),a)
     end
+end
+
+"""
+    st_index1_pow(n::Int) -> Index
+
+st_index1_pow(n) == stpw(Index(1),n)
+"""
+function st_index1_pow(n::Int)::Index
+    if n == 0
+        return one(Index)
+    end
+    # 返す値
+    idx = Index()
+
+    # 0 を許さず、最上位ビットだけ 1 に固定
+    # 残り n-1 個のビットを全探索
+    total = UInt(1) << (n-1)
+
+    # n! を BigInt で計算
+    nf = factorial(BigInt(n))
+
+    for mask in UInt(0):(total-1)
+        # ビット列を作成：必ず先頭は 1
+        bits = ones(Int,n)
+        bits[1] = 2
+
+        # 残りのビット（下位 n-1 を mask から読む）
+        for i in 2:n
+            bits[i] += (mask >> (n-i)) & 0x1 == 1 ? 1 : 0
+        end
+
+        # 100101 → [3,2,1]
+        v = idxprs(Word(bits))
+        
+        # multinomial
+        coeff = multinomial(v,nf)
+
+        #@show (bits,v,w,coeff)
+
+        idx.terms[Word(v)] = coeff
+    end
+
+    return idx
+end
+
+function sh_index1_pow(n::Int)::Hoffman
+    h = Hoffman()
+    h.terms[Word(ones(Int,n))] = factorial(BigInt(n))
+    return h
 end
 
 shuffle_product(a::Index, b::Index)::Index            = Index(shuffle_product(a.toHoffman, b.toHoffman))
@@ -630,6 +668,9 @@ star_stuffle_product_double(a::Hoffman)::Hoffman      = Hoffman(star_stuffle_pro
 star_stuffle_pow(a::Hoffman, n::Int)::Hoffman         = Hoffman(star_stuffle_pow(a.toIndex, n))
 starstpw(a::Hoffman, n::Int)::Hoffman                 = Hoffman(starstpw(a.toIndex, n))
 
+⟒(a,b) = shuffle_product(a,b)
+∗(a,b) = stuffle_product(a,b)
+⋆(a,b) = star_stuffle_product(a,b)
 
 ###################################################################################################
 ############## homomorphic ########################################################################
@@ -904,11 +945,12 @@ Landen_dual(idx::Index)::Index = Index(Landen_dual(idx.toHoffman))
 #=
 # 正規化多項式
 
+=#
 
 # 右から1が最も多く続くIndexを返す
 # 同数なら全てを返す
 
-function rightmostones(i::Index)::Vector{Index}
+function rightmostones(i::Index)::Vector{MonoIndex}
     maxlen = -1
     winners = Vector{Tuple{Word,Rational{BigInt}}}()
 
@@ -929,14 +971,112 @@ function rightmostones(i::Index)::Vector{Index}
         end
     end
 
-    # 結果をIndex型の配列に
-    res = Vector{Index}(undef, length(winners))
+    # 結果をMonoIndex型の配列に
+    res = Vector{MonoIndex}(undef, lastindex(winners))
     for (k, (w, c)) in enumerate(winners)
-        idx = Index()
-        idx.terms[w] = c
-        res[k] = idx
+        res[k] = MonoIndex(w,c)
     end
     return res
+end
+function rightmostones(h::Hoffman)::Vector{MonoIndex}
+    maxlen = -1
+    winners = Vector{Tuple{Word,Rational{BigInt}}}()
+
+    # 辞書を一度だけ走査
+    for (w, c) in h.terms
+        # 末尾の1の連続数をカウント
+        cnt = 0
+        for x in lastindex(w.t):-1:1
+            w[x] == 1 ? (cnt += 1) : break
+        end
+
+        if cnt > maxlen
+            maxlen = cnt
+            empty!(winners)
+            push!(winners, (w, c))
+        elseif cnt == maxlen
+            push!(winners, (w, c))
+        end
+    end
+
+    # 結果をMonoIndex型の配列に
+    # MonoIndexをただWordと係数を一度に入れれる便利なTupleのように扱っている(Wordの扱いはHoffmanとしている)
+    res = Vector{MonoIndex}(undef, lastindex(winners))
+    for (k, (w, c)) in enumerate(winners)
+        res[k] = MonoIndex(w,c)
+    end
+    return res
+end
+function leftmostones(i::Index)::Vector{MonoIndex}
+    maxlen = -1
+    winners = Vector{Tuple{Word,Rational{BigInt}}}()
+
+    # 辞書を一度だけ走査
+    for (w, c) in i.terms
+        # 末尾の1の連続数をカウント
+        cnt = 0
+        for x in 1:lastindex(w.t)
+            w[x] == 1 ? (cnt += 1) : break
+        end
+
+        if cnt > maxlen
+            maxlen = cnt
+            empty!(winners)
+            push!(winners, (w, c))
+        elseif cnt == maxlen
+            push!(winners, (w, c))
+        end
+    end
+
+    # 結果をMonoIndex型の配列に
+    res = Vector{MonoIndex}(undef, lastindex(winners))
+    for (k, (w, c)) in enumerate(winners)
+        res[k] = MonoIndex(w,c)
+    end
+    return res
+end
+function leftmostones(h::Hoffman)::Vector{MonoIndex}
+    maxlen = -1
+    winners = Vector{Tuple{Word,Rational{BigInt}}}()
+
+    # 辞書を一度だけ走査
+    for (w, c) in h.terms
+        # 末尾の1の連続数をカウント
+        cnt = 0
+        for x in 1:lastindex(w.t)
+            w[x] == 1 ? (cnt += 1) : break
+        end
+
+        if cnt > maxlen
+            maxlen = cnt
+            empty!(winners)
+            push!(winners, (w, c))
+        elseif cnt == maxlen
+            push!(winners, (w, c))
+        end
+    end
+
+    # 結果をMonoIndex型の配列に
+    # MonoIndexをただWordと係数を一度に入れれる便利なTupleのように扱っている(Wordの扱いはHoffmanとしている)
+    res = Vector{MonoIndex}(undef, lastindex(winners))
+    for (k, (w, c)) in enumerate(winners)
+        res[k] = MonoIndex(w,c)
+    end
+    return res
+end
+function rightonesplit(w::Word)::Tuple{Word,Int}
+    cnt = 0
+    for x in lastindex(w):-1:1
+        w[x] == 1 ? (cnt += 1) : break
+    end
+    return (w[1:end-cnt] , cnt)
+end
+function leftonesplit(w::Word)::Tuple{Word,Int}
+    cnt = 0
+    for x in 1:lastindex(w)
+        w[x] == 1 ? (cnt += 1) : break
+    end
+    return (w[cnt+1:end] , cnt)
 end
 #=
 [2,1,1]
@@ -946,10 +1086,124 @@ end
 =#
 function stuffle_regularization_polynomial(w::Word)
     if get_index_orientation()
-        if w[end] != 2
-            return w
+        if w[end] != 1  # xに相当する
+            return Poly(IndexWordtoIndex(w))
         end
-        s = Index()
+        z = IndexWordtoIndex(w)
+        r = Poly{Index}()
+
+        while !iszero(z)    # z が0でない限り続ける
+            m = rightmostones(z)
+            zadd = Index()
+            mi_d = 0
+            for mi in m
+                # zのうち右から続く1が一番多いものの集まりm
+                # mの一つ一つの1の続く部分(mi_d個)とそれ以外(mi_r)
+                mi_r, mi_d = rightonesplit(mi.word)
+
+                # mi_r ∗ Index(1)^{∗mi_d} を計算
+                #mi_t = stuffle_product(IndexWordtoIndex(mi_r),stpw(Index(1),mi_d))
+                mi_t = stuffle_product(IndexWordtoIndex(mi_r),st_index1_pow(mi_d))
+
+                # 係数を合わせる
+                diffc = mi.coeff//mi_t.terms[mi.word]
+                
+                # zからひとつづつ引く
+                z -= mi_t * diffc
+
+                # r(正規化多項式)に足しこむ分
+                zadd.terms[mi_r] = diffc
+            end
+            r.terms[mi_d] = zadd
+        end
+        return r
+    else
+        if w[1] != 1
+            return Poly(IndexWordtoIndex(w))
+        end
+        z = IndexWordtoIndex(w)
+        r = Poly{Index}()
+        
+        while !iszero(z)
+            m = leftmostones(z)
+            zadd = Index()
+            mi_d = 0
+            for mi in m
+                mi_r, mi_d = leftonesplit(mi.word)
+
+                #mi_t = stuffle_product(IndexWordtoIndex(mi_r),stpw(Index(1),mi_d))
+                mi_t = stuffle_product(IndexWordtoIndex(mi_r),st_index1_pow(mi_d))
+                
+                diffc = mi.coeff//mi_t.terms[mi.word]
+
+                z -= mi_t * diffc
+
+                zadd.terms[mi_r] = diffc
+            end
+            r.terms[mi_d] = zadd
+        end
+        return r
     end
 end
-=#
+
+function shuffle_regularization_polynomial(w::Word)
+    if get_index_orientation()
+        if w[end] != 1  # xに相当する
+            return Poly(HoffmanWordtoHoffman(w))
+        end
+        z = HoffmanWordtoHoffman(w)
+        r = Poly{Hoffman}()
+
+        while !iszero(z)    # z が0でない限り続ける
+            m = rightmostones(z)
+            zadd = Hoffman()
+            mi_d = 0
+            for mi in m
+                # zのうち右から続く1が一番多いものの集まりm
+                # mの一つ一つの1の続く部分(mi_d個)とそれ以外(mi_r)
+                mi_r, mi_d = rightonesplit(mi.word)
+
+                # mi_r ⟒ Hoffman(1)^{⟒mi_d} を計算
+                #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
+                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_index1_pow(mi_d))
+
+                # 係数を合わせる
+                diffc = mi.coeff//mi_t.terms[mi.word]
+                
+                # zからひとつづつ引く
+                z -= mi_t * diffc
+
+                # r(正規化多項式)に足しこむ分
+                zadd.terms[mi_r] = diffc
+            end
+            r.terms[mi_d] = zadd
+        end
+        return r
+    else
+        if w[1] != 1
+            return Poly(HoffmanWordtoHoffman(w))
+        end
+        z = HoffmanWordtoHoffman(w)
+        r = Poly{Hoffman}()
+        
+        while !iszero(z)
+            m = leftmostones(z)
+            zadd = Hoffman()
+            mi_d = 0
+            for mi in m
+                mi_r, mi_d = leftonesplit(mi.word)
+
+                #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
+                mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_index1_pow(mi_d))
+                
+                diffc = mi.coeff//mi_t.terms[mi.word]
+
+                z -= mi_t * diffc
+
+                zadd.terms[mi_r] = diffc
+            end
+            r.terms[mi_d] = zadd
+        end
+        return r
+    end
+end

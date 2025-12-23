@@ -142,12 +142,18 @@ struct Word <: ZetaExpr
     end
 end
 
-# 個人によるIndexの向きの補正
-const _INDEX_ORIENTATION = Base.RefValue{Bool}(true)
-# true  : z_k = y*x^{k-1}
-# false : z_k = x^{k-1}*y
+"""
+個人によるIndexの向きの補正
 
+true  : z_k = y*x^{k-1}
+
+false : z_k = x^{k-1}*y
+"""
+const _INDEX_ORIENTATION = Base.RefValue{Bool}(true)
+
+""" true  : z_k = y*x^{k-1} false : z_k = x^{k-1}*y """
 set_index_orientation!(val::Bool) = (_INDEX_ORIENTATION[] = val)
+""" true  : z_k = y*x^{k-1} false : z_k = x^{k-1}*y """
 get_index_orientation() = _INDEX_ORIENTATION[]
 
 # REPLで表示する項の数(目安)

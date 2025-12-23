@@ -11,6 +11,62 @@ export is_monomial, is_hoffman, is_index, is_monoindex,
 
 """
 ###################################################################################################
+                                        Arithmatics
+###################################################################################################
+"""
+#=
+A
+C(n+1,k+1) = (n+1)/(k+1)*C(n,k)
+B
+C(n+1,k) = (n+1)/(n-k+1)*C(n,k)
+=#
+#= (遅い)
+function multinomial(v::Vector{Int})
+    sorted_v = sort(v)
+    binomm = Rational(BigInt(1))
+    n = sorted_v[1]
+    k = sorted_v[1]
+    
+    multinomm = Rational(BigInt(1))
+
+    for i in 1:lastindex(v)-1
+        for _ in 1:(sorted_v[i+1]-sorted_v[i])
+            n += 1
+            k += 1
+            binomm *= n//k
+        end
+        for _ in 1:sorted_v[i]
+            n += 1
+            binomm *= n//(n-k)
+        end
+        multinomm *= binomm
+    end
+
+    return multinomm
+end
+=#
+@inline function multinomial(v::Vector{Int})::BigInt
+    num = factorial(BigInt(sum(v)))
+    den = BigInt(1)
+    for k in v
+        den *= factorial(BigInt(k))
+    end
+    return div(num,den)
+end
+"""
+v,n -> n/(v[1]!v[2]! ...)
+"""
+@inline function multinomial(v::Vector{Int},n::BigInt)::BigInt
+    den = BigInt(1)
+    for k in v
+        den *= factorial(BigInt(k))
+    end
+    return div(n,den)
+end
+
+
+"""
+###################################################################################################
                                         Operators
 ###################################################################################################
 """

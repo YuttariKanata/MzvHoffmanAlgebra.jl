@@ -505,7 +505,11 @@ function naturalshow(io::IO, w::Index, f::Bool)
             end
         end
 
-        print(io, "[", join(word,", "), "]" )
+        if isempty(word)
+            print(io, "")
+        else
+            print(io, "[", join(word,", "), "]" )
+        end
     end
 end
 function naturalshow(io::IO, r::Poly{Rational{BigInt}})
@@ -570,14 +574,11 @@ function show(io::IO, ::MIME"text/plain", r::Poly{A}) where A
     end
     degs = sort(collect(keys(r.terms)), rev=true)
 
-    Sg = ""
     first = true
     for d in degs
         ci = r.terms[d]
         if d == 0
-            print(io, Sg)
-            show(io, MIME("text/plain"), ci)
-            Sg = " + "
+            naturalshow(io, ci, first)
             continue
         else
             if is_monomial(ci)
@@ -585,12 +586,11 @@ function show(io::IO, ::MIME"text/plain", r::Poly{A}) where A
                     naturalshow(io,ci,first)
                 end
             else
-                print(io, Sg, "(")
-                show(io, MIME("text/plain"), ci)
-                print(io, ")")
+                print(io," + (")
+                naturalshow(io, ci, first)
+                print(io,")")
             end
         end
-        Sg = " + "
         if d == 1
             print(io, "T")
         else

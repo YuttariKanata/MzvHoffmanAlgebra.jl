@@ -519,8 +519,8 @@ end
 
 +(a::Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
 -(a::Union{NN,Word,Hoffman}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
-+(a::Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
--(a::Union{Poly{Rational{BigInt}},Poly{Hoffman}}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
++(a::Poly{Rational{BigInt}}, b::Poly{Hoffman})::Poly{Hoffman} = +(b,a)
+-(a::Poly{Rational{BigInt}}, b::Poly{Hoffman})::Poly{Hoffman} = +(-b,a)
 
 
 
@@ -570,8 +570,8 @@ end
 
 +(a::Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(b,a)
 -(a::Union{NN,MonoIndex,Index}, b::Poly{Index})::Poly{Index} = +(-b,a)
-+(a::Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(b,a)
--(a::Union{Poly{Rational{BigInt}},Poly{Index}}, b::Poly{Index})::Poly{Index} = +(-b,a)
++(a::Poly{Rational{BigInt}}, b::Poly{Index})::Poly{Index} = +(b,a)
+-(a::Poly{Rational{BigInt}}, b::Poly{Index})::Poly{Index} = +(-b,a)
 
 
 
