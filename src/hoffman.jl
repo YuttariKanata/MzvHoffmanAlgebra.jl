@@ -8,10 +8,11 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
        st_index1_pow, sh_index1_pow,
-       ⟒, ∗, ⋆,
+       ⩊, ∗, ⋆,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
-       dual, Hoffman_dual, Landen_dual
-       stuffle_regularization_polynomial, shuffle_regularization_polynomial
+       dual, Hoffman_dual, Landen_dual,
+       stuffle_regularization_polynomial, shuffle_regularization_polynomial,
+       rho_t, rho,
 =#
 
 """
@@ -668,7 +669,7 @@ star_stuffle_product_double(a::Hoffman)::Hoffman      = Hoffman(star_stuffle_pro
 star_stuffle_pow(a::Hoffman, n::Int)::Hoffman         = Hoffman(star_stuffle_pow(a.toIndex, n))
 starstpw(a::Hoffman, n::Int)::Hoffman                 = Hoffman(starstpw(a.toIndex, n))
 
-⟒(a,b) = shuffle_product(a,b)
+⩊(a,b) = shuffle_product(a,b)
 ∗(a,b) = stuffle_product(a,b)
 ⋆(a,b) = star_stuffle_product(a,b)
 
@@ -1098,7 +1099,7 @@ end
 1. rightmostonesをする
 2. 各項に対してshuffle_product(後ろ,1,1,...)をする
 =#
-function stuffle_regularization_polynomial(w::Word)
+function stuffle_regularization_polynomial(w::Word)::Poly{Index}
     if get_index_orientation()
         if w[end] != 1  # xに相当する
             return Poly(IndexWordtoIndex(w))
@@ -1160,7 +1161,7 @@ function stuffle_regularization_polynomial(w::Word)
     end
 end
 
-function shuffle_regularization_polynomial(w::Word)
+function shuffle_regularization_polynomial(w::Word)::Poly{Hoffman}
     if get_index_orientation()
         if w[end] != 2  # xに相当する
             return Poly(HoffmanWordtoHoffman(w))
@@ -1177,7 +1178,7 @@ function shuffle_regularization_polynomial(w::Word)
                 # mの一つ一つの1の続く部分(mi_d個)とそれ以外(mi_r)
                 mi_r, mi_d = rightysplit(mi.word)
 
-                # mi_r ⟒ Hoffman(1)^{⟒mi_d} を計算
+                # mi_r ⩊ Hoffman(1)^{⩊mi_d} を計算
                 #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
                 mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_y_pow(mi_d))
 
@@ -1220,4 +1221,102 @@ function shuffle_regularization_polynomial(w::Word)
         end
         return r
     end
+end
+
+# ρ
+
+struct CombSum
+    a::Vector{Int}
+    s::Int
+end
+
+"""
+    sum_combinations(n,k)::Vector{CombSum}
+和がn以下になるような2以上の整数k個の組をすべて返す
+"""
+function sum_combinations(n::UInt64, k::UInt64)::Vector{CombSum}
+
+    if k == 0
+        return CombSum[CombSum(Int[],0)]
+    end
+
+    results = Vector{CombSum}()
+
+    a = fill(2, k)
+    S = 2k  # 現在の総和
+
+    while true
+        push!(results, CombSum(copy(a), S))
+
+        advanced = false
+        suffix_sum = 0
+
+        for i in k:-1:1
+            suffix_sum += a[i]
+            ai = a[i] + 1
+            rest = k - i
+
+            new_sum = (S - suffix_sum) + ai * (rest + 1)
+
+            if new_sum <= n
+                S = new_sum
+                a[i] = ai
+                for j in i+1:k
+                    a[j] = ai
+                end
+                advanced = true
+                break
+            end
+        end
+
+        advanced || break
+    end
+
+    return results
+end
+
+function rho_t(m::UInt64)::Dict{Tuple{Int, Vector{Int}}, Rational{BigInt}}
+    # key = (j, [n1,n2,...])  ↦  coefficient
+    result = Dict{Tuple{Int, Vector{Int}}, Rational{BigInt}}()
+    mfact = factorial(BigInt(m))
+
+    for k in UInt64(0):m>>1
+        m_k = mfact//factorial(BigInt(k))
+        for cs in sum_combinations(m, k)
+            #s = cs.s
+            j = m - cs.s
+            j < 0 && continue
+
+            zetas = cs.a  # すでに nondecreasing
+            coeff = m_k // factorial(BigInt(j))
+
+            for n in zetas
+                coeff *= (-1)^n // n
+            end
+
+            key = (j, zetas)
+            result[key] = get(result, key, 0//1) + coeff
+        end
+    end
+
+    return result
+end
+
+function rho(ri::Poly{Index})
+    rh = Poly{Hoffman}()
+    for (deg,coeff) in ri.terms
+        # deg::Int, coeff::Index
+        # c*T^d -> c*(rT)
+        coeff_h = Hoffman(coeff)
+        rT = rho_t(UInt64(deg))
+        for (rhodegzeta,ratcoeff) in rT
+            rhodeg = rhodegzeta[1]
+            rhocoeff = coeff_h
+            for rc in rhodegzeta[2]
+                rhocoeff = shuffle_product(rhocoeff,IndexWordtoHoffman(Word(rc)))
+            end
+            rh.terms[rhodeg] = get(rh.terms, rhodeg, zero(Hoffman)) + rhocoeff
+        end
+    end
+    return rh
 end
