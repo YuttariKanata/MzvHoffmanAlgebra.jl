@@ -320,7 +320,7 @@ isempty(w::Word) = isempty(w.t)
 
 # ===== 各種操作互換 =====
 @inline copy(w::Word) = Word(w.t)                       # コピー
-collect(w::Word) = collect(Int,w.t)                         # Vector化
+collect(w::Word) = collect(Int,w.t)                     # Vector化
 Tuple(w::Word) = w.t                                    # タプル化
 vcat(a::Word, b::Word) = Word((a.t..., b.t...))         # 連結
 hcat(a::Word, b::Word) = Word((a.t..., b.t...))

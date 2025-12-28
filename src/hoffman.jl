@@ -12,7 +12,7 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
-       rho_t, rho,
+       rho_t, rho, reg_st, reg_sh,
 =#
 
 """
@@ -942,15 +942,12 @@ end
 Landen_dual(idx::Word)::Word = Index(monomial_Landen(IndexWordtoHoffmanWord(idx)))
 Landen_dual(idx::Index)::Index = Index(Landen_dual(idx.toHoffman))
 
+###################################################################################################
+############## regularization polynomial ##########################################################
 
-#=
-# 正規化多項式
-
-=#
 
 # 右から1が最も多く続くIndexを返す
 # 同数なら全てを返す
-
 function rightmostones(i::Index)::Vector{MonoIndex}
     maxlen = -1
     winners = Vector{Tuple{Word,Rational{BigInt}}}()
@@ -979,6 +976,8 @@ function rightmostones(i::Index)::Vector{MonoIndex}
     end
     return res
 end
+# 右からyが最も多く続くHoffmanを返す
+# 同数なら全てを返す
 function rightmostys(h::Hoffman)::Vector{MonoIndex}
     maxlen = -1
     winners = Vector{Tuple{Word,Rational{BigInt}}}()
@@ -1065,6 +1064,7 @@ function leftmostys(h::Hoffman)::Vector{MonoIndex}
     end
     return res
 end
+# 右から続く1の長さとそれ以外の部分をTupleにして返す
 function rightonesplit(w::Word)::Tuple{Word,Int}
     cnt = 0
     for x in lastindex(w):-1:1
@@ -1094,12 +1094,11 @@ function leftysplit(w::Word)::Tuple{Word,Int}
     return (w[cnt+1:end] , cnt)
 end
 #=
-[2,1,1]
-
 1. rightmostonesをする
 2. 各項に対してshuffle_product(後ろ,1,1,...)をする
 =#
 function stuffle_regularization_polynomial(w::Word)::Poly{Index}
+    isone(w) && return one(Poly{Index})
     if get_index_orientation()
         if w[end] != 1  # xに相当する
             return Poly(IndexWordtoIndex(w))
@@ -1160,8 +1159,16 @@ function stuffle_regularization_polynomial(w::Word)::Poly{Index}
         return r
     end
 end
+function stuffle_regularization_polynomial(idx::Index)::Poly{Index}
+    rp = Poly{Index}()
+    for (w,c) in idx.terms
+        rp += c * stuffle_regularization_polynomial(w)
+    end
+    return rp
+end
 
 function shuffle_regularization_polynomial(w::Word)::Poly{Hoffman}
+    isone(w) && return one(Poly{Hoffman})
     if get_index_orientation()
         if w[end] != 2  # xに相当する
             return Poly(HoffmanWordtoHoffman(w))
@@ -1222,9 +1229,17 @@ function shuffle_regularization_polynomial(w::Word)::Poly{Hoffman}
         return r
     end
 end
+function shuffle_regularization_polynomial(h::Hoffman)::Poly{Hoffman}
+    rp = Poly{Hoffman}()
+    for (w,c) in h.terms
+        rp += c * shuffle_regularization_polynomial(w)
+    end
+    return rp
+end
 
 # ρ
 
+# 整数の配列とその配列の数の総和
 struct CombSum
     a::Vector{Int}
     s::Int
@@ -1275,6 +1290,36 @@ function sum_combinations(n::UInt64, k::UInt64)::Vector{CombSum}
     return results
 end
 
+"""
+`Z^⧢ = ρ(Z^∗)` を満たす写像の`ρ(T^m)`を返す
+
+Dict( (Tの次数,ゼータ関数の整数値の積) => 係数 )
+という形で返す。
+
+```jldoctest
+julia> rho_t(UInt(2))
+Dict{Tuple{Int64, Vector{Int64}}, Rational{BigInt}} with 2 entries:
+  (2, [])  => 1
+  (0, [2]) => 1
+```
+
+これは`ρ(T^2) = T^2 + ζ(2)`を表す
+
+```jldoctest
+julia> rho_t(UInt(4))
+Dict{Tuple{Int64, Vector{Int64}}, Rational{BigInt}} with 5 entries:
+  (4, [])     => 1
+  (2, [2])    => 6
+  (1, [3])    => -8
+  (0, [2, 2]) => 3
+  (0, [4])    => 6
+```
+
+これは`ρ(T^4) = T^4 + 6ζ(2)T^2 - 8ζ(3)T + 6ζ(4) + 3ζ(2)^2`を表す
+
+多重ゼータ値は現れない
+
+"""
 function rho_t(m::UInt64)::Dict{Tuple{Int, Vector{Int}}, Rational{BigInt}}
     # key = (j, [n1,n2,...])  ↦  coefficient
     result = Dict{Tuple{Int, Vector{Int}}, Rational{BigInt}}()
@@ -1301,8 +1346,10 @@ function rho_t(m::UInt64)::Dict{Tuple{Int, Vector{Int}}, Rational{BigInt}}
 
     return result
 end
-
-function rho(ri::Poly{Index})
+"""
+`Z^⧢ = ρ(Z^∗)` を満たす写像
+"""
+function rho(ri::Poly{Index})::Poly{Hoffman}
     rh = Poly{Hoffman}()
     for (deg,coeff) in ri.terms
         # deg::Int, coeff::Index
@@ -1317,6 +1364,30 @@ function rho(ri::Poly{Index})
             end
             rh.terms[rhodeg] = get(rh.terms, rhodeg, zero(Hoffman)) + rhocoeff
         end
+    end
+    return rh
+end
+
+# reg_st reg_sh
+function reg_st(w::Word)::Index
+    rp = stuffle_regularization_polynomial(w)
+    return rp.terms[0]
+end
+function reg_st(idx::Index)::Index
+    ri = Index()
+    for (w,c) in idx.terms
+        ri += c * reg_st(w)
+    end
+    return ri
+end
+function reg_sh(w::Word)::Hoffman
+    rp = shuffle_regularization_polynomial(w)
+    return rp.terms[0]
+end
+function reg_sh(h::Hoffman)::Hoffman
+    rh = Hoffman()
+    for (w,c) in h.terms
+        rh += c * reg_sh(w)
     end
     return rh
 end

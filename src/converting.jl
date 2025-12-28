@@ -375,6 +375,7 @@ function Hoffman(a::Poly{Index})::Poly{Hoffman}
     end
     return r
 end
+Hoffman(a::Poly{Hoffman})::Poly{Hoffman} = a
 function Index(a::Poly{Hoffman})::Poly{Index}
     r = Poly{Index}()
     for (d,c) in a.terms
@@ -382,6 +383,7 @@ function Index(a::Poly{Hoffman})::Poly{Index}
     end
     return r
 end
+Index(a::Poly{Index})::Poly{Index} = a
 function Hoffman(a::Poly{Rational{BigInt}})::Poly{Hoffman}
     r = Poly{Hoffman}()
     for (d,c) in a.terms
