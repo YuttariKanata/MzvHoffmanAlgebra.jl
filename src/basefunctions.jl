@@ -359,6 +359,41 @@ isone(w::Hoffman)::Bool          = length(w.terms) == 1 && haskey(w.terms,Word()
 #isone(mpl::MPLCombination)::Bool =  # TODO
 isone(r::Poly)::Bool             = length(r.terms) == 1 && haskey(r.terms,0) && isone(r.terms[0])
 
+function isadmissible(idx::Index)::Bool
+    if get_index_orientation()
+        for w in keys(idx.terms)
+            if !isempty(w) && w[end] <= 1
+                return false
+            end
+        end
+        return true
+    else
+        for w in keys(idx.terms)
+            if !isempty(w) && w[1] <= 1
+                return false
+            end
+        end
+        return true
+    end
+end
+function isadmissible(h::Hoffman)::Bool
+    if get_index_orientation()
+        for w in keys(h.terms)
+            if !isempty(w) && w[end] >= 2
+                return false
+            end
+        end
+        return true
+    else
+        for w in keys(h.terms)
+            if !isempty(w) && w[1] >= 2
+                return false
+            end
+        end
+        return true
+    end
+end
+
 ==(a::Index,b::Index)::Bool         = a.terms == b.terms
 ==(a::MonoIndex,b::MonoIndex)::Bool = a.word == b.word && a.coeff == b.coeff
 ==(a::Hoffman,b::Hoffman)::Bool     = a.terms == b.terms

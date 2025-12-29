@@ -165,7 +165,7 @@ function left_act(op::OpDeriv, w::Word)::Index
     if op.cnt == 0
         return IndexWordtoIndex(w)
     end
-    r = HoffmanWordtoHoffman(w)
+    r = IndexWordtoHoffman(w)
     for _ in 1:op.cnt
         r = dell(r,op.n)
     end
@@ -363,7 +363,7 @@ end
 *(idx::Index, op::AbstractOp)::Index = right_act(op,copy(idx))
 *(idx::Index, op::Type{<:AbstractOp})::Index = right_act((op)(1),copy(idx))
 
-function *(op::Operator, w::Word)::Word
+function *(op::Operator, w::Word)::Union{Word,Index}
     rw = w
     if isone(op)
         return rw
@@ -373,9 +373,9 @@ function *(op::Operator, w::Word)::Word
     end
     return rw
 end
-*(op::AbstractOp, w::Word)::Word = left_act(op,w)
-*(op::Type{<:AbstractOp}, w::Word)::Word = left_act((op)(1),w)
-function *(w::Word, op::Operator)::Word
+*(op::AbstractOp, w::Word)::Union{Word,Index} = left_act(op,w)
+*(op::Type{<:AbstractOp}, w::Word)::Union{Word,Index} = left_act((op)(1),w)
+function *(w::Word, op::Operator)::W
     rw = w
     if isone(op)
         return w

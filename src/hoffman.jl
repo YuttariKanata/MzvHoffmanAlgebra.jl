@@ -1424,16 +1424,12 @@ function dell(h::Hoffman, n::Int64)::Hoffman
     s = Hoffman()
     if get_index_orientation()
         xyn1 = y*(x+y)^(n-1)*x
-        image = [xyn1, -xyn1]
-        for (w,c) in h.terms
-            add!(s,Hoffman_derivation(w,image),c)
-        end
     else
         xyn1 = x*(x+y)^(n-1)*y
-        image = [xyn1, -xyn1]
-        for (w,c) in h.terms
-            add!(s,Hoffman_derivation(w,image),c)
-        end
+    end
+    image = [xyn1, -xyn1]
+    for (w,c) in h.terms
+        add!(s,Hoffman_derivation(w,image),c)
     end
     return s
 end
