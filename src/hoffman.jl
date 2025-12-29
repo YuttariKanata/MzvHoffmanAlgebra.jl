@@ -7,8 +7,8 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
-       st_index1_pow, sh_index1_pow,
-       ⩊, ∗, ⋆,
+       st_index1_pow, sh_y_pow,
+       ⨝, ∗, ⋆,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
@@ -649,6 +649,11 @@ function st_index1_pow(n::Int)::Index
     return idx
 end
 
+"""
+    sh_y_pow(n::Int) -> Hoffman
+
+sh_y_pow(n) == shpw(HoffmanWordtoHoffman(y),n)
+"""
 function sh_y_pow(n::Int)::Hoffman
     h = Hoffman()
     h.terms[Word(fill(2,n))] = factorial(BigInt(n))
@@ -670,7 +675,7 @@ star_stuffle_product_double(a::Hoffman)::Hoffman      = Hoffman(star_stuffle_pro
 star_stuffle_pow(a::Hoffman, n::Int)::Hoffman         = Hoffman(star_stuffle_pow(a.toIndex, n))
 starstpw(a::Hoffman, n::Int)::Hoffman                 = Hoffman(starstpw(a.toIndex, n))
 
-⩊(a,b) = shuffle_product(a,b)
+⨝(a,b) = shuffle_product(a,b)
 ∗(a,b) = stuffle_product(a,b)
 ⋆(a,b) = star_stuffle_product(a,b)
 
@@ -1192,7 +1197,7 @@ function shuffle_regularization_polynomial(w::Word)::Poly{Hoffman}
                 # mの一つ一つの1の続く部分(mi_d個)とそれ以外(mi_r)
                 mi_r, mi_d = rightysplit(mi.word)
 
-                # mi_r ⩊ Hoffman(1)^{⩊mi_d} を計算
+                # mi_r ⨝ Hoffman(1)^{⨝mi_d} を計算
                 #mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),shpw(Hoffman(1),mi_d))
                 mi_t = shuffle_product(HoffmanWordtoHoffman(mi_r),sh_y_pow(mi_d))
 

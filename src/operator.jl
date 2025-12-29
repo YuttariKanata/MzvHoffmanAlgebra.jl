@@ -375,7 +375,7 @@ function *(op::Operator, w::Word)::Union{Word,Index}
 end
 *(op::AbstractOp, w::Word)::Union{Word,Index} = left_act(op,w)
 *(op::Type{<:AbstractOp}, w::Word)::Union{Word,Index} = left_act((op)(1),w)
-function *(w::Word, op::Operator)::W
+function *(w::Word, op::Operator)::Word
     rw = w
     if isone(op)
         return w

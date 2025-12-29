@@ -47,6 +47,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        # basefunctions.jl
        is_monomial, is_hoffman, is_index, is_monoindex,
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,
+       isadmissible,
        # converting.jl
        HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
        IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
@@ -60,8 +61,8 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
-       st_index1_pow, sh_index1_pow,
-       ⩊, ∗, ⋆,
+       st_index1_pow, sh_y_pow,
+       ⨝, ∗, ⋆,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
@@ -72,6 +73,8 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        # operator.jl
        left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂,
        WordtoOperator
+       # calc.jl
+
 
 include("types.jl")
 include("basefunctions.jl")
@@ -80,5 +83,6 @@ include("arithmetic.jl")
 include("hoffman.jl")
 include("accessors.jl")
 include("operator.jl")
+include("calc.jl")
 
 end

@@ -7,6 +7,7 @@ import Base: getindex, length, iterate, firstindex, eltype, isempty, copy, colle
 #=
 export is_monomial, is_hoffman, is_index, is_monoindex,
        is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr
+       isadmissible,
 =#
 
 """
