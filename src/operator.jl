@@ -113,31 +113,63 @@ function left_act(op::OpPhi, t::Index)::Index
     end
     return r
 end
+function left_act(op::OpDeriv, t::Index)::Index
+    r = copy(t)
+    if op.cnt == 0
+        return r
+    else
+        for _ in 1:op.cnt
+            r = dell(r,op.n)
+        end
+    end
+    return r
+end
 
 left_act(op::OpMinus, w::Word)::Word = w[1+op.cnt:end]
 left_act(op::OpUp, w::Word)::Word    = isone(w) ? Word(op.cnt)  : Word(w[1]+op.cnt,w[2:end]...)
 left_act(op::OpDown, w::Word)::Word  = isone(w) ? Word(-op.cnt) : Word(w[1]-op.cnt,w[2:end]...)
 left_act(op::OpLeft, w::Word)::Word  = Word(1)^op.cnt * w
-left_act(op::OpTau, w::Word)::Word   = op.cnt & 1 == 1 ? monomial_dual_i(w) : w
+function left_act(op::OpTau, w::Word)::Word
+    if op.cnt & 1 == 1
+        if get_index_orientation()
+            return monomial_dual_i(w)
+        else
+            return monomial_dual_i_r(w)
+        end
+    else
+        return w
+    end
+end
 function left_act(op::OpEta, w::Word)::Word
     if op.cnt == 0
         return w
     end
     r = w
     for _ in 1:op.cnt
+        # monomial_hof_dual_i と monomial_hof_dual_i_r が等価なので場合分けしなくてよい
         r = monomial_hof_dual_i(r)
     end
     return r
 end
 function left_act(op::OpPhi, w::Word)::Index
     if op.cnt == 0
-        return w
+        return IndexWordtoIndex(w)
     end
     r = w
     for _ in 1:op.cnt
         r = Landen_dual(r)
     end
     return r
+end
+function left_act(op::OpDeriv, w::Word)::Index
+    if op.cnt == 0
+        return IndexWordtoIndex(w)
+    end
+    r = HoffmanWordtoHoffman(w)
+    for _ in 1:op.cnt
+        r = dell(r,op.n)
+    end
+    return Index(r)
 end
 
 ############################## right_act ##############################

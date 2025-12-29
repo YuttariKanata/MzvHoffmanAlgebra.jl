@@ -66,6 +66,7 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
        rho_t, rho, reg_st, reg_sh,
+       Hoffman_derivation, dell,
        # accessors.jl
        upper_represent, sortedprint,
        # operator.jl

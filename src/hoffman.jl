@@ -13,6 +13,7 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
        rho_t, rho, reg_st, reg_sh,
+       Hoffman_derivation, dell,
 =#
 
 """
@@ -939,7 +940,13 @@ function Landen_dual(w::Hoffman)::Hoffman
     end
     return s
 end
-Landen_dual(idx::Word)::Word = Index(monomial_Landen(IndexWordtoHoffmanWord(idx)))
+function Landen_dual(idx::Word)::Index
+    if get_index_orientation()
+        return Index(monomial_Landen(IndexWordtoHoffmanWord(idx)))
+    else
+        return Index(monomial_Landen_r(IndexWordtoHoffmanWord(idx)))
+    end
+end
 Landen_dual(idx::Index)::Index = Index(Landen_dual(idx.toHoffman))
 
 ###################################################################################################
@@ -1362,16 +1369,21 @@ function rho(ri::Poly{Index})::Poly{Hoffman}
             for rc in rhodegzeta[2]
                 rhocoeff = shuffle_product(rhocoeff,IndexWordtoHoffman(Word(rc)))
             end
-            rh.terms[rhodeg] = get(rh.terms, rhodeg, zero(Hoffman)) + rhocoeff
+            rh.terms[rhodeg] = get(rh.terms, rhodeg, zero(Hoffman)) + ratcoeff * rhocoeff
         end
     end
     return rh
 end
 
 # reg_st reg_sh
+"""
+reg_st(w)
+
+stuffle 正規化多項式の定数項を返す。
+"""
 function reg_st(w::Word)::Index
     rp = stuffle_regularization_polynomial(w)
-    return rp.terms[0]
+    return get(rp.terms, 0, zero(Index))
 end
 function reg_st(idx::Index)::Index
     ri = Index()
@@ -1380,9 +1392,14 @@ function reg_st(idx::Index)::Index
     end
     return ri
 end
+"""
+reg_sh(w)
+
+shuffle 正規化多項式の定数項を返す。
+"""
 function reg_sh(w::Word)::Hoffman
     rp = shuffle_regularization_polynomial(w)
-    return rp.terms[0]
+    return get(rp.terms, 0, zero(Hoffman))
 end
 function reg_sh(h::Hoffman)::Hoffman
     rh = Hoffman()
@@ -1391,3 +1408,33 @@ function reg_sh(h::Hoffman)::Hoffman
     end
     return rh
 end
+
+###################################################################################################
+############## derivation #########################################################################
+
+function Hoffman_derivation(w::Word, image::Vector{Hoffman})::Hoffman
+    s = Hoffman()
+    lw = lastindex(w)
+    for i in 1:lw
+        add!(s,w[1:i-1]* image[w[i]] * w[i+1:lw])
+    end
+    return s
+end
+function dell(h::Hoffman, n::Int64)::Hoffman
+    s = Hoffman()
+    if get_index_orientation()
+        xyn1 = y*(x+y)^(n-1)*x
+        image = [xyn1, -xyn1]
+        for (w,c) in h.terms
+            add!(s,Hoffman_derivation(w,image),c)
+        end
+    else
+        xyn1 = x*(x+y)^(n-1)*y
+        image = [xyn1, -xyn1]
+        for (w,c) in h.terms
+            add!(s,Hoffman_derivation(w,image),c)
+        end
+    end
+    return s
+end
+dell(idx::Index, n::Int64)::Index = Index(dell(Hoffman(idx),n))

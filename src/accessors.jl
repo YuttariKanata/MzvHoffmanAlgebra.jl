@@ -163,10 +163,6 @@ function getproperty(w::Word, sym::Symbol)
         return IndexWordtoIndex(w)
     elseif sym == :tovec
         return collect(Int64,w)
-    elseif sym == :last
-        return last_letter(w)
-    elseif sym == :rmlast
-        return remove_lastletter(w)
     else
         return getfield(w,sym)
     end
