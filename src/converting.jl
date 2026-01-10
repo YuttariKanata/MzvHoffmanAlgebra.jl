@@ -166,12 +166,12 @@ end
 """returned Hoffman word"""
 function Word(w::Hoffman)::Word
     if !is_monomial(w)
-        throw(DomainError(i,"i must be monomial"))
+        throw(DomainError(w,"w must be monomial"))
     end
-    if !isone(first(values(i.terms)))
-        throw(DomainError(i,"i's coefficient is not 1"))
+    if !isone(first(values(w.terms)))
+        throw(DomainError(w,"w's coefficient is not 1"))
     end
-    return Word(first(keys(i.terms)))
+    return Word(first(keys(w.terms)))
 end
 
 function IndexWordtoHoffmanWord(w::Word)::Word
