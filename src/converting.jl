@@ -200,12 +200,12 @@ Word(w::Word)::Word = w
 
 
 # [============== about Index ==============]
-# function Index(x::Int...)
-#     idx = Index()
-#     wv = Word(x)
-#     idx.terms[wv] = Rational(BigInt(1))
-#     return idx
-# end
+function Index(x::Int...)
+    idx = Index()
+    wv = Word(x)
+    idx.terms[wv] = Rational(BigInt(1))
+    return idx
+end
 function Index(t::Tuple{Vararg{Int}})::Index
     idx = Index()
     wv = Word(t)
@@ -282,11 +282,11 @@ function Index(w::Hoffman)::Index
 end
 
 Index(i::Index)::Index = i
-function Index(n::NN)::Index
-    idx = Index()
-    idx.terms[Word()] = n
-    return idx
-end
+# function Index(n::NN)::Index
+#     idx = Index()
+#     idx.terms[Word()] = n
+#     return idx
+# end
 # TODO: Index for hrm shf mpl
 
 
@@ -328,11 +328,11 @@ function Hoffman(i::Index)::Hoffman
 end
 
 Hoffman(w::Hoffman)::Hoffman = w
-function Hoffman(n::NN)::Hoffman
-    w = Hoffman()
-    w.terms[Word()] = n
-    return w
-end
+# function Hoffman(n::NN)::Hoffman
+#     w = Hoffman()
+#     w.terms[Word()] = n
+#     return w
+# end
 # TODO: Hoffman for hrm shf mpl
 
 
