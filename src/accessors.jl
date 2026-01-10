@@ -18,6 +18,8 @@ export upper_represent, sortedprint
 
 ###################################################################################################
 ############## about representation ###############################################################
+
+#function uppernumber: 数字を上付き文字に変換する
 const _UpperNumber_Table = Dict{Int,Char}(
     0 => '⁰',
     1 => '¹',
@@ -48,6 +50,7 @@ end
 const _upper_represent = Base.RefValue{Bool}(false)
 upper_represent(val::Bool) = (_upper_represent[] = val)
 
+#show: Operatorの出力の見栄えをよくする
 function show(io::IO, ::MIME"text/plain", op::Operator)
     if isempty(op.ops)
         print(io, "∅")
