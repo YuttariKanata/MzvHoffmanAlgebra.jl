@@ -207,9 +207,8 @@ end
         return a
     end
     if isempty(a.ops)
-        r = Operator()
-        r.ops = b
-        return r
+        a.ops = b
+        return a
     end
 
     # 中央境界
