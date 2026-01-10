@@ -138,7 +138,7 @@ show(io::IO, op::AbstractOp) = show(io, MIME("text/plain"), op)
 ###################################################################################################
 ############## get property #######################################################################
 
-
+#function getproperty: 型を変換する
 function getproperty(w::Union{MonoIndex,Hoffman,Index}, sym::Symbol)
     if sym == :toIndex
         return Index(w)
@@ -182,6 +182,7 @@ end
 ###################################################################################################
 ############## about representation ###############################################################
 
+#function coeff_to_str: MZVなどの表示を整える
 @inline function coeff_to_str(r::Rational{BigInt})::String
     if r.den == 1
         return string(r.num)
@@ -376,7 +377,7 @@ function show(io::IO, idx::Index)
     end
 end
 
-# sortedprint (Hoffman, Index)
+# sortedprint (Hoffman, Index): 語をソートして見やすい一覧表示にする
 
 function sortedprint(w::Hoffman)
     if iszero(w)
@@ -429,7 +430,7 @@ function sortedprint(idx::Index)
     end
 end
 
-# naturalshow (Hoffman, Index)
+# naturalshow (Hoffman, Index): 係数が単項ならそのまま，そうでなければ +(...)T^dのように表示する
 
 function naturalshow(io::IO, w::Hoffman, f::Bool)
     if iszero(w)
