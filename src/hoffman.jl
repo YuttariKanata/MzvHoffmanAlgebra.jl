@@ -8,7 +8,7 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        shuffle_pow, stuffle_pow, star_stuffle_pow, 
        shpw, stpw, starstpw,
        st_index1_pow, sh_y_pow,
-       ⨝, ∗, ⋆,
+       ш, ⨝, ∗, ⋆,
        Hoffman_hom, Hoffman_antihom, starword_to_word,
        dual, Hoffman_dual, Landen_dual,
        stuffle_regularization_polynomial, shuffle_regularization_polynomial,
@@ -676,6 +676,7 @@ star_stuffle_pow(a::Hoffman, n::Int)::Hoffman         = Hoffman(star_stuffle_pow
 starstpw(a::Hoffman, n::Int)::Hoffman                 = Hoffman(starstpw(a.toIndex, n))
 
 ⨝(a,b) = shuffle_product(a,b)
+ш(a,b) = shuffle_product(a,b)
 ∗(a,b) = stuffle_product(a,b)
 ⋆(a,b) = star_stuffle_product(a,b)
 
