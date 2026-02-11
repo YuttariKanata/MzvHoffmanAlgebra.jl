@@ -5,7 +5,7 @@ DocMeta.setdocmeta!(MzvHoffmanAlgebra, :DocTestSetup, :(using MzvHoffmanAlgebra)
 
 makedocs(;
     modules=[MzvHoffmanAlgebra],
-    authors="Y.K.495 <yuttarikanata@gmail.com>, いーな <kankitsumikan0424@gmail.com>",
+    authors="いーな <kankitsumikan0424@gmail.com>, Y.K.495 <yuttarikanata@gmail.com>",
     sitename="MzvHoffmanAlgebra.jl",
     format=Documenter.HTML(;
         canonical="https://YuttariKanata.github.io/MzvHoffmanAlgebra.jl",

@@ -1,6 +1,6 @@
 using Test
 using Random
-using MZVHoffmanAlgebra
+using MzvHoffmanAlgebra
 
 include("test_datas.jl")
 
@@ -60,7 +60,7 @@ function rand_poly(deg_range, coeff_gen)
     return p
 end
 
-@testset "MZVHoffmanAlgebra All Tests" begin
+@testset "MzvHoffmanAlgebra All Tests" begin
 
     # ==========================================
     # Comprehensive Unit Tests
@@ -509,7 +509,7 @@ end
         Random.seed!(1234)
         
         # Access internal functions for testing
-        mod = MZVHoffmanAlgebra
+        mod = MzvHoffmanAlgebra
         
         gen_hoffman(n) = rand_hoffman(n, 0:5)
         gen_index(n) = rand_index(n, 1:3, 1:4) # Avoid empty words for strict conversion tests
