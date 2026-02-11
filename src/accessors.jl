@@ -62,7 +62,7 @@ end
 
 @inline function word_to_str(w::IndexWord)::String
     isempty(w) && return ""
-    return "[" * join(w.t, ",") * "]"
+    return "Index(" * join(w.t, ",") * ")"
 end
 
 """

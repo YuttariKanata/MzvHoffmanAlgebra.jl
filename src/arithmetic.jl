@@ -139,8 +139,6 @@ end
 
 ############################## MULTIPLICATION ##############################
 
-*(a::Operator, b::Operator) = Operator([a.ops; b.ops])
-
 *(a::Hoffman, b::HoffmanWord) = *(promote(a,b)...)
 *(a::HoffmanWord, b::Hoffman) = *(promote(a,b)...)
 *(a::Union{Hoffman, HoffmanWord}, b::NN) = *(promote(a,b)...)

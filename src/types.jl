@@ -137,8 +137,8 @@ struct IndexWord <: AbstractWord
     t::Tuple{Vararg{Int}}
 end
 
-HoffmanWord() = HoffmanWord(( ))
-IndexWord()   = IndexWord(( ))
+HoffmanWord() = HoffmanWord(())
+IndexWord()   = IndexWord(())
 
 # The orientation of indices (e.g. :left for z_k=y*x^{k-1} or :right for z_k=x^{k-1}*y)
 # is now passed as an argument to conversion functions, instead of using a global state.

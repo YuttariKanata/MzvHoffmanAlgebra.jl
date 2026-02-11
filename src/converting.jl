@@ -74,7 +74,6 @@ end
 ############## Conversion Functions ###############################################################
 
 # [============== about MonoIndex ==============]
-IndexWord()::IndexWord = IndexWord(Tuple{}())
 IndexWord(v::Vector)::IndexWord = IndexWord(Tuple{Vararg{Int}}(v))
 function IndexWord(i::Index)::IndexWord
     if !is_monomial(i)
@@ -111,7 +110,6 @@ index(s...)::IndexWord = IndexWord(s...)    # = Index(s...)にするべき？
 
 
 # [============== about Word ==============]
-HoffmanWord()::HoffmanWord = HoffmanWord(Tuple{}())
 HoffmanWord(s::Int...)::HoffmanWord = HoffmanWord(s)
 const x = HoffmanWord(0)
 const y = HoffmanWord(1)
@@ -152,7 +150,6 @@ HoffmanWord(w::HoffmanWord)::HoffmanWord = w # Immutable
 
 
 # [============== about Index ==============]
-Index()::Index = Index(Dict{IndexWord,Rational{BigInt}}())
 function Index(idx::Int...)::Index
     return Index( Dict{IndexWord,Rational{BigInt}}( IndexWord(idx) => Rational{BigInt}(1) ) )
 end
@@ -213,7 +210,6 @@ Index(i::Index)::Index = i # Immutable
 
 
 # [============== about Hoffman ==============]
-Hoffman()::Hoffman = Hoffman(Dict{HoffmanWord,Rational{BigInt}}())
 function Hoffman(v::Vector{Vector{Int}})::Hoffman
     w = Hoffman()
     c = Rational{BigInt}(1)

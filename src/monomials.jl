@@ -8,17 +8,6 @@
 ###################################################################################################
 """
 
-# Helper to add terms to a dictionary
-function _add!(d::Dict{W, C}, w::W, c::C) where {W, C}
-    iszero(c) && return
-    new_val = get(d, w, zero(C)) + c
-    if iszero(new_val)
-        delete!(d, w)
-    else
-        d[w] = new_val
-    end
-end
-
 # Implements the Suffix-recursive definition of shuffle product:
 # 1 ш w = w ш 1 = w
 # wu ш w'u' = (wu ш w')u' + (w ш w'u')u
