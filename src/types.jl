@@ -143,9 +143,6 @@ IndexWord()   = IndexWord(())
 # The orientation of indices (e.g. :left for z_k=y*x^{k-1} or :right for z_k=x^{k-1}*y)
 # is now passed as an argument to conversion functions, instead of using a global state.
 
-# REPLで表示する項の数(目安)
-const _OMIT_COUNTS = 100
-
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
 struct Hoffman <: ZetaExpr

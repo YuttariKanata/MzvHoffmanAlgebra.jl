@@ -142,15 +142,6 @@ function _show_linear_combination(io::IO, obj::Union{Hoffman, Index})
     # Here we just iterate for performance.
     
     for (k, (word, coeff)) in enumerate(obj.terms)
-        # Omit if too long
-        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
-            if k <= lid - 30
-                if k == _OMIT_COUNTS
-                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
-                end
-                continue
-            end
-        end
 
         # Sign handling
         if first
@@ -243,14 +234,6 @@ function show_poly_rat(io::IO, r::Poly{Rational{BigInt}})
 
     first = true
     for (k, d) in enumerate(degs)
-        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
-            if k <= lid - 30
-                if k == _OMIT_COUNTS
-                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
-                end
-                continue
-            end
-        end
 
         coeff = r.terms[d]
 
@@ -299,14 +282,6 @@ function show(io::IO, ::MIME"text/plain", r::Poly{A}) where A
 
     first = true
     for (k, d) in enumerate(degs)
-        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
-            if k <= lid - 30
-                if k == _OMIT_COUNTS
-                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
-                end
-                continue
-            end
-        end
 
         coeff = r.terms[d]
         
