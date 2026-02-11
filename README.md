@@ -1,4 +1,4 @@
-# MultipleZetaValueHoffmanAlgebra.jl 技術解説・利用ガイド
+# MultipleZetaValueHoffmanAlgebra.jl
 
 本パッケージは、**多重ゼータ値 (MZV)** の代数構造、特に **Hoffman 代数** $\mathfrak{H} = \mathbb{Q}\langle x, y \rangle$ とそのインデックス表記 $\mathfrak{H}^1$ を計算機上で厳密に扱うための Julia ライブラリです。
 
