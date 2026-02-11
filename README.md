@@ -48,8 +48,7 @@ Pkg.add(url="https://github.com/YuttariKanata/MzvHoffmanAlgebra.jl")
 ```julia
 using MzvHoffmanAlgebra
 
-# 何かエクスポートされている関数や型があれば、ここで試すことができます。
-# 例: MzvHoffmanAlgebra.some_function()
+# 何もエラーが出なければok
 
 ```
 
