@@ -4,7 +4,7 @@
 
 #=
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
-       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
+       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, AbstractWord, HoffmanWord, Hoffman, IndexWord, Index,
        ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
        set_index_orientation!, get_index_orientation
 =#
@@ -36,56 +36,50 @@ export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, 
 # 抽象シンボル
 abstract type AbstractOp end
 
-mutable struct OpUp    <: AbstractOp
+# cntは繰り返しの回数
+struct OpUp    <: AbstractOp
     cnt::Int
 end   # ↑
-mutable struct OpDown  <: AbstractOp
+struct OpDown  <: AbstractOp
     cnt::Int
 end   # ↓
-mutable struct OpLeft  <: AbstractOp
+struct OpLeft  <: AbstractOp
     cnt::Int
 end   # ←
-mutable struct OpRight <: AbstractOp
+struct OpRight <: AbstractOp
     cnt::Int
 end   # →
-mutable struct OpMinus <: AbstractOp
+struct OpMinus <: AbstractOp
     cnt::Int
 end   # -
-mutable struct OpTau   <: AbstractOp
+struct OpTau   <: AbstractOp
     cnt::Int
 end   # τ
-mutable struct OpEta   <: AbstractOp
+struct OpEta   <: AbstractOp
     cnt::Int
 end   # η
-mutable struct OpPhi   <: AbstractOp
+struct OpPhi   <: AbstractOp
     cnt::Int
 end   # φ
 
 # ∂n はパラメータ付き
-mutable struct OpDeriv <: AbstractOp
-    n::Int
+struct OpDeriv <: AbstractOp
     cnt::Int
+    n::Int
 end
-OpDeriv(n::Int) = OpDeriv(1,n)
+OpDeriv(n::Int) = OpDeriv(n,1)
 
-function (::Type{A})() where A <: AbstractOp
-    if A === OpDeriv
-        return A(1,1)
-    else
-        return A(1)
-    end
-end
+(::Type{A})() where {A<:AbstractOp} = A(1)
 
 # Operator
-mutable struct Operator
+struct Operator
     ops::Vector{AbstractOp}
-
-    function Operator()
-        new(Vector{AbstractOp}())
+    function Operator(v::Vector{<:AbstractOp})
+        new(clean(v))
     end
 end
 
-
+Operator() = Operator(AbstractOp[])
 
 
 
@@ -105,15 +99,15 @@ end
 #  │    └─ ShuffleForm
 #  │
 #  ├─ HarmonicExpr (abstract)
-#  │    ├─ ZetaExpr (abstract)
-#  │    │    ├─ Hoffman
-#  │    │    ├─ Index
-#  │    │    ├─ MonoIndex
-#  │    │    └─ Word
 #  │    └─ HarmonicForm
 #  │
 #  └─ MPLCombination   # 有理数係数上の線形結合
-# 
+#
+# ZetaExpr (abstract)
+#   ├─ Hoffman
+#   ├─ Index
+#   ├─ MonoIndex
+#   └─ Word 
 #########################################################
 
 
@@ -125,70 +119,53 @@ abstract type ShuffleExpr  <: MPL end      # 反復積分系（shuffle 構造）
 abstract type HarmonicExpr <: MPL end      # z_i=1 に特化（調和和）
 
 # ζ 系（抽象）— 調和和の中でも ζ を中心に
-abstract type ZetaExpr     <: HarmonicExpr end
+abstract type ZetaExpr end
 
-# 指数の型（できたら UInt32/UInt16 へ）
-const ExprInt = Int
+# 有理数と整数
 const NN = Union{Integer,Rational}
 
 # ワード = インデックス列。ハッシュ性と軽さ重視で Tuple に
 # WordのTupleの中身はimmutableなものにしておいてください！！！
-#const Word = Tuple{Vararg{ExprInt}}  # 例: (2,3) など
+#const Word = Tuple{Vararg{Int}}  # 例: (2,3) など
 # Wordの定義を上記から下記へ変更した このためにWordがTupleのようにふるまうインターフェースをbasefunctions.jlに書いた
-struct Word <: ZetaExpr
+abstract type AbstractWord <: ZetaExpr end
+
+struct HoffmanWord <: AbstractWord
     t::Tuple{Vararg{Int}}
-    function Word(w::Tuple{Vararg{Int}})
-        new(w)
-    end
+end
+struct IndexWord <: AbstractWord
+    t::Tuple{Vararg{Int}}
 end
 
-"""
-個人によるIndexの向きの補正
+HoffmanWord() = HoffmanWord(( ))
+IndexWord()   = IndexWord(( ))
 
-true  : z_k = y*x^{k-1}
-
-false : z_k = x^{k-1}*y
-"""
-const _INDEX_ORIENTATION = Base.RefValue{Bool}(true)
-
-""" true  : z_k = y*x^{k-1} false : z_k = x^{k-1}*y """
-set_index_orientation!(val::Bool) = (_INDEX_ORIENTATION[] = val)
-""" true  : z_k = y*x^{k-1} false : z_k = x^{k-1}*y """
-get_index_orientation() = _INDEX_ORIENTATION[]
+# The orientation of indices (e.g. :left for z_k=y*x^{k-1} or :right for z_k=x^{k-1}*y)
+# is now passed as an argument to conversion functions, instead of using a global state.
 
 # REPLで表示する項の数(目安)
 const _OMIT_COUNTS = 100
 
 # Hoffman 代数の元：ワードの有限線形結合（係数は有理数）
 # xy^3x^2 -> [1,2,2,2,1,1]
-mutable struct Hoffman <: ZetaExpr
-    terms::Dict{Word,Rational{BigInt}}
-    function Hoffman()
-        new(Dict{Word,Rational{BigInt}}())
+struct Hoffman <: ZetaExpr
+    terms::Dict{HoffmanWord,Rational{BigInt}}
+    function Hoffman(d::Dict{HoffmanWord,Rational{BigInt}})
+        new(filter(p->!iszero(p.second),d))
     end
 end
-
-# 「ζ系の生のインデックス」を薄いラッパで持つ
-mutable struct MonoIndex <: ZetaExpr
-    word::Word
-    coeff::Rational{BigInt}
-    function MonoIndex(word::Word, coeff::NN)
-        if iszero(coeff)
-            throw(DomainError(coeff,"coefficient cant not be 0."))
-        end
-        new(word,coeff)
-    end
-end
+Hoffman() = Hoffman(Dict{HoffmanWord,Rational{BigInt}}())
 
 # yxyx^3y^2x^2 -> [2,4,1,3]
 # もし _INDEX_ORIENTATION がfalseなら
 # x^2y^2x^3yxy -> [3,1,4,2]
-mutable struct Index <: ZetaExpr
-    terms::Dict{Word, Rational{BigInt}}
-    function Index()
-        new(Dict{Word, Rational{BigInt}}())
+struct Index <: ZetaExpr
+    terms::Dict{IndexWord, Rational{BigInt}}
+    function Index(d::Dict{IndexWord,Rational{BigInt}})
+        new(filter(p->!iszero(p.second),d))
     end
 end
+Index() = Index(Dict{IndexWord,Rational{BigInt}}())
 
 # 一般の shuffle 形式
 struct ShuffleForm <: ShuffleExpr
@@ -204,33 +181,13 @@ struct MPLCombination <: MPL
     terms::Dict{MPL,Rational{BigInt}}     # 異なる具象（Hoffman/EulerSum/ShuffleForm）も混在OK
 end
 
-# # Hoffman型の値を係数とする多項式
-# mutable struct RegHoffman
-#     terms::Dict{Int,Hoffman}  # T のべき -> Hoffman 元の係数
-#     function RegHoffman()
-#         new(Dict{Int,Hoffman}())
-#     end
-# end
-# 
-# # Index型の値を係数とする多項式
-# mutable struct RegIndex
-#     terms::Dict{Int,Index}  # T のべき -> Index 元の係数
-#     function RegIndex()
-#         new(Dict{Int,Index}())
-#     end
-# end
-
 # 多項式一つで済ます
-mutable struct Poly{A}
+struct Poly{A}
     terms::Dict{Int,A}
-
-    function Poly{A}() where {A}
-        new(Dict{Int,A}())
-    end
-
-    function Poly{A}(dic::Dict{Int,A}) where {A}
-        new(dic)
+    function Poly{A}(d::Dict{Int,A}) where A
+        new{A}(filter(p->!iszero(p.second),d))
     end
 end
+Poly{A}() where A = Poly{A}( Dict{Int,A}() )
 
-const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}(Dict{Int,Rational{BigInt}}( Rational(BigInt(1)) => Rational(BigInt(1)) ))
+const T::Poly{Rational{BigInt}} = Poly{Rational{BigInt}}( Dict{Int,Rational{BigInt}}( 1 => Rational{BigInt}(1) ) )

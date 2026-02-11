@@ -1,4 +1,4 @@
-module MzvHoffmanAlgebra
+module MZVHoffmanAlgebra
 
 
 #########################################################
@@ -41,48 +41,57 @@ module MzvHoffmanAlgebra
 
        # types.jl
 export AbstractOp, OpUp, OpDown, OpLeft, OpRight, OpMinus, OpTau, OpEta, OpPhi, OpDeriv, Operator,
-       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, ExprInt, NN, Word, Hoffman, MonoIndex, Index,
-       ShuffleForm, HarmonicForm, MPLCombination, Poly, T,
-       set_index_orientation!, get_index_orientation,
+       MPL, ShuffleExpr, HarmonicExpr, ZetaExpr, NN, AbstractWord, HoffmanWord, Hoffman, IndexWord, Index,
+       ShuffleForm, HarmonicForm, MPLCombination, Poly, T
+
        # basefunctions.jl
-       is_monomial, is_hoffman, is_index, is_monoindex,
-       is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr,is_zetaexpr,
-       isadmissible,
+export multinomial, str_to_op, clean,
+       is_monomial, is_hoffmanword, is_hoffman, is_index, is_indexword,
+       is_shuffleform, is_harmonicform, is_mplcombination, is_shuffleexpr, is_harmonicexpr, is_zetaexpr,
+       is_admissible,
+       idxprs, idxprs_r, idxdprs, idxdprs_r
+
        # converting.jl
-       HoffmanWordtoMonoIndex, IndexWordtoMonoIndex,
-       IndexWordtoHoffmanWord, HoffmanWordtoIndexWord,
-       HoffmanWordtoIndex, IndexWordtoIndex,
-       HoffmanWordtoHoffman, IndexWordtoHoffman,
-       x, y,
+export index, x, y
+
        # arithmetic.jl
-       shift_degree, add!,
-       # hoffman.jl
-       shuffle_product, stuffle_product, star_stuffle_product, 
-       shuffle_product_double, stuffle_product_double, star_stuffle_product_double,
-       shuffle_pow, stuffle_pow, star_stuffle_pow, 
-       shpw, stpw, starstpw,
-       st_index1_pow, sh_y_pow,
+export shift_degree
+
+       # products.jl
+export shuffle_product, stuffle_product, star_stuffle_product,
        ш, ⨝, ∗, ⋆,
-       Hoffman_hom, Hoffman_antihom, starword_to_word,
-       dual, Hoffman_dual, Landen_dual,
-       stuffle_regularization_polynomial, shuffle_regularization_polynomial,
-       rho_t, rho, reg_st, reg_sh,
-       Hoffman_derivation, dell,
+       shuffle_pow, stuffle_pow, star_stuffle_pow,
+       st_index1_pow, sh_y_pow
+
+       # regularization.jl
+export reg_st, reg_sh, stuffle_regularization_polynomial, shuffle_regularization_polynomial, rho, rho_t
+
+       # duals.jl
+export dual, Hoffman_dual, Landen_dual,
+       Hoffman_hom, Hoffman_antihom, starword_to_word
+
+       # derivations.jl
+export dell, Hoffman_derivation
+
        # accessors.jl
-       upper_represent, sortedprint,
-       # operator.jl
-       left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂,
+export sortedprint, upper_represent
+
+       # operators.jl
+export left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂,
        WordtoOperator
-       # calc.jl
+;
 
 
 include("types.jl")
 include("basefunctions.jl")
 include("converting.jl")
 include("arithmetic.jl")
-include("hoffman.jl")
+include("monomials.jl")
+include("products.jl")
+include("regularization.jl")
+include("duals.jl")
+include("derivations.jl")
 include("accessors.jl")
-include("operator.jl")
-include("calc.jl")
+include("operators.jl")
 
 end

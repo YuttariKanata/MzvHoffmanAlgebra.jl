@@ -1,241 +1,163 @@
 #[ accessors.jl ]#
 
-# This file defines functions that extend Base-derived functions
-
+# This file defines functions for string representation and visualization.
 
 import Base: show, getproperty
 
-#=
-export upper_represent, sortedprint
-=#
-
 """
 ###################################################################################################
-                                        Operators
+                                        Representation Helpers
 ###################################################################################################
 """
 
-
-###################################################################################################
-############## about representation ###############################################################
-
-#function uppernumber: 数字を上付き文字に変換する
+# Superscript mapping
 const _UpperNumber_Table = Dict{Int,Char}(
-    0 => '⁰',
-    1 => '¹',
-    2 => '²',
-    3 => '³',
-    4 => '⁴',
-    5 => '⁵',
-    6 => '⁶',
-    7 => '⁷',
-    8 => '⁸',
-    9 => '⁹',
-    -1 => '⁻',
+    0 => '⁰', 1 => '¹', 2 => '²', 3 => '³', 4 => '⁴',
+    5 => '⁵', 6 => '⁶', 7 => '⁷', 8 => '⁸', 9 => '⁹',
+    -1 => '⁻'
 )
 
 @inline function uppernumber(n::Integer)::String
     ds = digits(abs(n))
     l = lastindex(ds)
-    v = Vector{Char}(undef,l)
+    v = Vector{Char}(undef, l)
     for i in 1:l
         v[i] = _UpperNumber_Table[ds[l+1-i]]
     end
     if signbit(n)
-        pushfirst!(v,_UpperNumber_Table[-1])
+        pushfirst!(v, _UpperNumber_Table[-1])
     end
     return join(v)
 end
 
+# Global toggle for upper case representation in Operators
 const _upper_represent = Base.RefValue{Bool}(false)
+"""
+    upper_represent(val::Bool)
+
+Sets whether to use superscript notation (e.g., ∂₁²) for operators in output.
+"""
 upper_represent(val::Bool) = (_upper_represent[] = val)
 
-#show: Operatorの出力の見栄えをよくする
-function show(io::IO, ::MIME"text/plain", op::Operator)
-    if isempty(op.ops)
-        print(io, "∅")
-        return
-    end
-    opl = lastindex(op.ops)
-    parts = Vector{String}(undef,opl)
-    if _upper_represent[]
-        for i in 1:opl
-            ot = typeof(op.ops[i])
-            k = op.ops[i].cnt
-            if ot === OpDeriv
-                if k == 1
-                    parts[i] = "∂" * string(op.ops[i].n)
-                else
-                    parts[i] = "∂" * string(op.ops[i].n) * uppernumber(k)
-                end
-            else
-                if k == 1
-                    parts[i] =  _Operator_to_String_Table[ot]
-                else
-                    parts[i] =  _Operator_to_String_Table[ot] * uppernumber(op.ops[i].cnt)
-                end
-            end
-        end
-    else
-        for i in 1:opl
-            ot = typeof(op.ops[i])
-            k = op.ops[i].cnt
-            if ot === OpDeriv
-                if k == 1
-                    parts[i] = "∂" * string(op.ops[i].n)
-                elseif k > 0
-                    parts[i] = "∂" * string(op.ops[i].n) * "^" * string(k)
-                else
-                    parts[i] = "∂" * string(op.ops[i].n) * "^(" * string(k) * ")"
-                end
-            else
-                if k == 1
-                    parts[i] =  _Operator_to_String_Table[ot]
-                elseif k > 0
-                    parts[i] =  _Operator_to_String_Table[ot] * "^" * string(op.ops[i].cnt)
-                else
-                    parts[i] =  _Operator_to_String_Table[ot] * "^(" * string(op.ops[i].cnt) * ")"
-                end
-            end
-        end
-    end
-
-    print(io, join(parts, " * "))
-end
-show(io::IO, op::Operator) = show(io, MIME("text/plain"), op)
-function show(io::IO, ::MIME"text/plain", op::AbstractOp)
-    if op isa OpDeriv
-        if _upper_represent[]
-            print(io,"∂",op.n,uppernumber(op.cnt))
-        else
-            print(io,"∂",op.n,"^",op.cnt)
-        end
-    else
-        if _upper_represent[]
-            print(io,_Operator_to_String_Table[typeof(op)],uppernumber(op.cnt))
-        else
-            print(io,_Operator_to_String_Table[typeof(op)],"^",op.cnt)
-        end
-    end
-end
-show(io::IO, op::AbstractOp) = show(io, MIME("text/plain"), op)
-
-
-
-
-
-
-
-
-
-"""
-###################################################################################################
-                                        Hoffman MZV
-###################################################################################################
-"""
-
-
-###################################################################################################
-############## get property #######################################################################
-
-#function getproperty: 型を変換する
-function getproperty(w::Union{MonoIndex,Hoffman,Index}, sym::Symbol)
-    if sym == :toIndex
-        return Index(w)
-    elseif sym == :toHoffman
-        return Hoffman(w)
-    elseif sym == :toMonoIndex
-        return MonoIndex(w)
-    elseif sym == :toWord
-        return Word(w)
-    elseif sym == :sortshow
-        sortedprint(w)
-    else
-        return getfield(w,sym)
-    end
-end
-
-function getproperty(w::Word, sym::Symbol)
-    if sym == :HoftoIdx
-        return HoffmanWordtoIndex(w)
-    elseif sym == :IdxtoHof
-        return IndexWordtoHoffman(w)
-    elseif sym == :HoftoHof
-        return HoffmanWordtoHoffman(w)
-    elseif sym == :IdxtoIdx
-        return IndexWordtoIndex(w)
-    elseif sym == :tovec
-        return collect(Int64,w)
-    else
-        return getfield(w,sym)
-    end
-end
-
-function getproperty(r::Poly, sym::Symbol)
-    if sym == :sortshow
-        sortedprint(r)
-    else
-        return getfield(r,sym)
-    end
-end
-
-###################################################################################################
-############## about representation ###############################################################
-
-#function coeff_to_str: MZVなどの表示を整える
 @inline function coeff_to_str(r::Rational{BigInt})::String
     if r.den == 1
         return string(r.num)
     end
     return string(r.num) * "/" * string(r.den)
 end
-@inline function word_to_str(w::Word)::String
+
+@inline function word_to_str(w::HoffmanWord)::String
     s = ""
-    for i in w
-        if i == 1
+    for i in w.t
+        if i == 0
             s *= "x"
-        elseif i == 2
+        elseif i == 1
             s *= "y"
+        else
+            s *= "?" # Should not happen for valid HoffmanWord
         end
     end
     return s
 end
 
-# show (Word, Hoffman Index)
-
-function show(io::IO, ::MIME"text/plain", w::Word)
-    show(io, MIME("text/plain"), w.t)
+@inline function word_to_str(w::IndexWord)::String
+    isempty(w) && return ""
+    return "[" * join(w.t, ",") * "]"
 end
-function show(io::IO, ::MIME"text/plain", w::Hoffman)
-    if iszero(w)
+
+"""
+###################################################################################################
+                                        Show Methods
+###################################################################################################
+"""
+
+# --- Operator ---
+
+function show(io::IO, ::MIME"text/plain", op::Operator)
+    if isempty(op.ops)
+        print(io, "id") # Identity operator
+        return
+    end
+    opl = lastindex(op.ops)
+    parts = Vector{String}(undef, opl)
+    
+    use_upper = _upper_represent[]
+    
+    for i in 1:opl
+        o = op.ops[i]
+        ot = typeof(o)
+        k = o.cnt
+        
+        base_str = ""
+        if ot === OpDeriv
+            base_str = "∂" * string(o.n)
+        else
+            base_str = get(_Operator_to_String_Table, ot, "?")
+        end
+        
+        if use_upper
+            if k == 1
+                parts[i] = base_str
+            else
+                parts[i] = base_str * uppernumber(k)
+            end
+        else
+            if k == 1
+                parts[i] = base_str
+            elseif k > 0
+                parts[i] = base_str * "^" * string(k)
+            else
+                parts[i] = base_str * "^(" * string(k) * ")"
+            end
+        end
+    end
+
+    print(io, join(parts, " "))
+end
+show(io::IO, op::Operator) = show(io, MIME("text/plain"), op)
+
+function show(io::IO, ::MIME"text/plain", op::AbstractOp)
+    show(io, MIME("text/plain"), Operator([op]))
+end
+show(io::IO, op::AbstractOp) = show(io, MIME("text/plain"), op)
+
+# --- Words ---
+
+show(io::IO, w::HoffmanWord) = print(io, isempty(w) ? "1" : word_to_str(w))
+show(io::IO, w::IndexWord) = print(io, isempty(w) ? "1" : word_to_str(w))
+
+# --- Hoffman / Index (Linear Combinations) ---
+
+function _show_linear_combination(io::IO, obj::Union{Hoffman, Index})
+    if iszero(obj)
         print(io, "0")
         return
     end
 
     first = true
-    lid = length(w.terms)
-    for (k, (word, coeff)) in enumerate(w.terms)
+    lid = length(obj.terms)
+    
+    # Note: Iteration order of Dict is undefined. 
+    # For deterministic output in tests/docs, sortedprint is preferred.
+    # Here we just iterate for performance.
+    
+    for (k, (word, coeff)) in enumerate(obj.terms)
+        # Omit if too long
         if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
-            if k <= lid-30
+            if k <= lid - 30
                 if k == _OMIT_COUNTS
-                    printstyled("...[$(lid - _OMIT_COUNTS - 29) terms]...",color = 11)
+                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
                 end
                 continue
             end
         end
-        # ±の表示
+
+        # Sign handling
         if first
             first = false
-            if coeff < Clong(0)
-                print(io, "- ")
+            if coeff < 0
+                print(io, "-")
                 coeff = -coeff
-            end
-            if coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
             end
         else
             if coeff < 0
@@ -244,35 +166,49 @@ function show(io::IO, ::MIME"text/plain", w::Hoffman)
             else
                 print(io, " + ")
             end
-            if coeff != Culong(1) || isempty(word)
-                print(io, coeff_to_str(coeff), "")
-            end
         end
 
-        print(io, word_to_str(word) )
+        # Coefficient and Word
+        is_unity = (coeff == 1)
+        word_s = word_to_str(word)
+        is_empty_word = isempty(word)
+
+        if is_unity && !is_empty_word
+            print(io, word_s)
+        elseif is_empty_word
+            print(io, coeff_to_str(coeff))
+        else
+            print(io, coeff_to_str(coeff), is_unity ? "" : " ", word_s)
+        end
     end
 end
-function show(io::IO, w::Hoffman)
+
+
+show(io::IO, ::MIME"text/plain", h::Hoffman) = _show_linear_combination(io, h)
+show(io::IO, h::Hoffman) = _show_linear_combination(io, h)
+
+show(io::IO, ::MIME"text/plain", idx::Index) = _show_linear_combination(io, idx)
+show(io::IO, idx::Index) = _show_linear_combination(io, idx)
+
+# --- Poly ---
+
+function naturalshow(io::IO, w::Union{Hoffman, Index}, first_term::Bool)
     if iszero(w)
         print(io, "0")
         return
     end
 
-    first = true
+    first = first_term
     for (word, coeff) in w.terms
-        # ±の表示
         if first
             first = false
-            if coeff < Clong(0)
-                print(io, "- ")
-                coeff = -coeff
-            end
-            if coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
+            if coeff == -1
+                print(io, "-")
+                if isempty(word) print(io, "1") end
+            elseif coeff == 1
+                if isempty(word) print(io, "1") end
             else
-                print(io, coeff_to_str(coeff), "")
+                print(io, coeff_to_str(coeff))
             end
         else
             if coeff < 0
@@ -281,260 +217,49 @@ function show(io::IO, w::Hoffman)
             else
                 print(io, " + ")
             end
-            if coeff != Culong(1) || isempty(word)
-                print(io, coeff_to_str(coeff), "")
+            if coeff != 1 || isempty(word)
+                print(io, coeff_to_str(coeff))
             end
         end
-
-        print(io, word_to_str(word) )
-    end
-end
-function show(io::IO, ::MIME"text/plain", idx::Index)
-    if iszero(idx)
-        print(io, "0")
-        return
-    end
-
-    first = true
-    lid = length(idx.terms)
-    for (k, (word, coeff)) in enumerate(idx.terms)
-        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
-            if k <= lid-30
-                if k == _OMIT_COUNTS
-                    printstyled("...[$(lid- _OMIT_COUNTS - 29) terms]...",color = 11)
-                end
-                continue
-            end
-        end
-        # ±の表示
-        if first
-            first = false
-            if coeff < Culong(0)
-                print(io, "- ")
-                coeff = -coeff
-            end
-            if coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
-            end
-        else
-            if coeff < 0
-                print(io, " - ")
-                coeff = -coeff
-            else
-                print(io, " + ")
-            end
-            if coeff != 1//1 || isempty(word)
-                print(io, coeff_to_str(coeff), "")
-            end
-        end
-
+        
         if !isempty(word)
-            print(io, "[", join(word,", "), "]" )
-        end
-    end
-end
-function show(io::IO, idx::Index)
-    if iszero(idx)
-        print(io, "0")
-        return
-    end
-
-    first = true
-    for (word, coeff) in idx.terms
-        # ±の表示
-        if first
-            first = false
-            if coeff < Culong(0)
-                print(io, "- ")
-                coeff = -coeff
+            if coeff != 1 && coeff != -1
+                print(io, " ")
             end
-            if coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
-            end
-        else
-            if coeff < 0
-                print(io, " - ")
-                coeff = -coeff
-            else
-                print(io, " + ")
-            end
-            if coeff != 1//1 || isempty(word)
-                print(io, coeff_to_str(coeff), "")
-            end
-        end
-
-        if !isempty(word)
-            print(io, "[", join(word,", "), "]" )
+            print(io, word_to_str(word))
         end
     end
 end
 
-# sortedprint (Hoffman, Index): 語をソートして見やすい一覧表示にする
-
-function sortedprint(w::Hoffman)
-    if iszero(w)
-        println("Hoffman with no entry:")
-        println("    0")
-        return
-    end
-
-    words = keys(w.terms)
-    coeffs = values(w.terms)
-    
-    max_coeff = maximum(t-> ndigits(t.den)+ndigits(t.num),coeffs)
-    number_space = max_coeff+3
-    
-    sorted_word = sort(collect(words); by = t -> (length(t), t))
-
-    if length(w.terms) == 1
-        println("Hoffman with $(length(w.terms)) entry:")
-    else
-        println("Hoffman with $(length(w.terms)) entries:")
-    end
-    for wo in sorted_word
-        c = coeff_to_str(w.terms[wo])
-        println(lpad(c,number_space)," ",word_to_str(wo))
-    end
-end
-function sortedprint(idx::Index)
-    if iszero(idx)
-        println("Index with no entry:")
-        println("    0 []")
-        return
-    end
-
-    words = keys(idx.terms)
-    coeffs = values(idx.terms)
-    
-    max_coeff = maximum(t-> ndigits(t.den)+ndigits(t.num),coeffs)
-    number_space = max_coeff+3
-    
-    sorted_word = sort(collect(words); by = t -> (sum(t), t))
-
-    if length(idx.terms) == 1
-        println("Index with $(length(idx.terms)) entry:")
-    else
-        println("Index with $(length(idx.terms)) entries:")
-    end
-    for wo in sorted_word
-        c = coeff_to_str(idx.terms[wo])
-        println(lpad(c,number_space)," [",join(wo,", "),"]")
-    end
-end
-
-# naturalshow (Hoffman, Index): 係数が単項ならそのまま，そうでなければ +(...)T^dのように表示する
-
-function naturalshow(io::IO, w::Hoffman, f::Bool)
-    if iszero(w)
-        print(io, "0")
-        return
-    end
-
-    first = f
-    for (word, coeff) in w.terms
-        # ±の表示
-        if first
-            first = false
-            if coeff == Clong(-1)
-                print(io, "- ")
-                if isempty(word)
-                    print(io, coeff_to_str(-coeff), "")
-                end
-            elseif coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
-            end
-        else
-            if coeff < 0
-                print(io, " - ")
-                coeff = -coeff
-            else
-                print(io, " + ")
-            end
-            if coeff != Culong(1) || isempty(word)
-                print(io, coeff_to_str(coeff), "")
-            end
-        end
-
-        print(io, word_to_str(word) )
-    end
-end
-function naturalshow(io::IO, w::Index, f::Bool)
-    if iszero(w)
-        print(io, "0")
-        return
-    end
-
-    first = f
-    for (word, coeff) in w.terms
-        # ±の表示
-        if first
-            first = false
-            if coeff == Clong(-1)
-                print(io, "- ")
-                if isempty(word)
-                    print(io, coeff_to_str(-coeff), "")
-                end
-            elseif coeff == Culong(1)
-                if isempty(word)
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
-            end
-        else
-            if coeff < 0
-                print(io, " - ")
-                coeff = -coeff
-            else
-                print(io, " + ")
-            end
-            if coeff != Culong(1) || isempty(word)
-                print(io, coeff_to_str(coeff), "")
-            end
-        end
-
-        if isempty(word)
-            print(io, "")
-        else
-            print(io, "[", join(word,", "), "]" )
-        end
-    end
-end
-function naturalshow(io::IO, r::Poly{Rational{BigInt}})
+function show_poly_rat(io::IO, r::Poly{Rational{BigInt}})
     if iszero(r)
         print(io, "0")
         return
     end
 
-    first = true
     degs = sort(collect(keys(r.terms)), rev=true)
-    for d in degs
+    degs = filter(d -> !iszero(r.terms[d]), degs)
+    lid = length(degs)
+
+    first = true
+    for (k, d) in enumerate(degs)
+        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
+            if k <= lid - 30
+                if k == _OMIT_COUNTS
+                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
+                end
+                continue
+            end
+        end
+
         coeff = r.terms[d]
+
+        # Sign and separator
         if first
             first = false
-            if coeff == Clong(-1)
-                print(io, "- ")
-                if d == 0
-                    print(io, coeff_to_str(-coeff), "")
-                end
-            elseif coeff == Clong(1)
-                if d == 0
-                    print(io, coeff_to_str(coeff), "")
-                end
-            else
-                print(io, coeff_to_str(coeff), "")
+            if coeff < 0
+                print(io, "-")
+                coeff = -coeff
             end
         else
             if coeff < 0
@@ -543,116 +268,234 @@ function naturalshow(io::IO, r::Poly{Rational{BigInt}})
             else
                 print(io, " + ")
             end
-            if coeff != Culong(1) || d == 0
-                print(io, coeff_to_str(coeff), "")
-            end
         end
 
-        if d > 1
-            print(io, "T^", d)
-        elseif d == 1
-            print(io, "T")
+        # Coefficient
+        if coeff != 1 || d == 0
+            print(io, coeff_to_str(coeff))
+            if d > 0 print(io, " ") end
         end
+
+        # Variable T
+        if d == 1; print(io, "T"); elseif d > 1; print(io, "T^", d); end
     end
 end
-
-# show, sortedprint (Poly)
 
 function show(io::IO, ::MIME"text/plain", r::Poly{A}) where A
-    if !(A === Hoffman || A === Index || A === Rational{BigInt})
-        @warn "Poly{$A}に対するshowはまだ未実装です。"
-        println(r)
-        return
-    end
     if iszero(r)
         print(io, "0")
         return
     end
+
+    # Sort by degree descending
     if A === Rational{BigInt}
-        naturalshow(io, r)
+        show_poly_rat(io, r)
         return
     end
+
     degs = sort(collect(keys(r.terms)), rev=true)
+    degs = filter(d -> !iszero(r.terms[d]), degs)
+    lid = length(degs)
 
     first = true
-    for d in degs
-        ci = r.terms[d]
-        if d == 0
-            naturalshow(io, ci, first)
-            continue
-        else
-            if is_monomial(ci)
-                if !isone(ci)
-                    naturalshow(io,ci,first)
+    for (k, d) in enumerate(degs)
+        if k >= _OMIT_COUNTS && lid >= _OMIT_COUNTS + 100
+            if k <= lid - 30
+                if k == _OMIT_COUNTS
+                    printstyled(io, " ...[$(lid - _OMIT_COUNTS - 29) terms]... ", color=:light_black)
                 end
-            else
-                print(io," + (")
-                naturalshow(io, ci, first)
-                print(io,")")
+                continue
             end
         end
+
+        coeff = r.terms[d]
+        
+        if d == 0
+            naturalshow(io, coeff, first)
+            first = false
+            continue
+        end
+
+        # For T^d terms
+        is_mono = is_monomial(coeff)
+        
+        if isone(coeff)
+            if !first print(io, " + ") end
+        elseif is_mono && isone(-coeff)
+            if first print(io, "-") else print(io, " - ") end
+        elseif is_mono
+            naturalshow(io, coeff, first)
+            print(io, " ")
+        else # not monomial
+            if !first print(io, " + ") end
+            print(io, "(")
+            naturalshow(io, coeff, true)
+            print(io, ")")
+            print(io, " ")
+        end
+
         if d == 1
             print(io, "T")
+        elseif d > 1
+            print(io, "T^", d)
         else
-            print(io, "T^",d)
+            # constant term was handled before
         end
         first = false
     end
 end
 show(io::IO, r::Poly) = show(io, MIME("text/plain"), r)
-function sortedprint(r::Poly{A}) where A
-    if !(A === Hoffman || A === Index)
-        @warn "Poly{$A}に対するsortedshowはまだ未実装です。"
-        println(r)
+
+"""
+    sortedprint(obj)
+
+Prints the element with terms sorted by word length/weight for easier reading.
+"""
+function sortedprint(w::Hoffman)
+    if iszero(w)
+        println("Hoffman (0)")
         return
     end
+
+    coeffs = values(w.terms)
+    max_len = isempty(coeffs) ? 0 : maximum(c -> length(coeff_to_str(c)), coeffs)
+    pad = max_len + 2
+    
+    # Sort by (length, word)
+    sorted_keys = sort(collect(keys(w.terms)); by = t -> (length(t), t.t))
+    
+    println("Hoffman with $(length(w)) entries:")
+    for k in sorted_keys
+        c_str = coeff_to_str(w.terms[k])
+        println("  ", lpad(c_str, pad), "  ", word_to_str(k))
+    end
+end
+
+function sortedprint(idx::Index)
+    if iszero(idx)
+        println("Index (0)")
+        return
+    end
+
+    coeffs = values(idx.terms)
+    max_len = isempty(coeffs) ? 0 : maximum(c -> length(coeff_to_str(c)), coeffs)
+    pad = max_len + 2
+    
+    # Sort by (weight, word)
+    sorted_keys = sort(collect(keys(idx.terms)); by = t -> (sum(t.t), t.t))
+    
+    println("Index with $(length(idx)) entries:")
+    for k in sorted_keys
+        c_str = coeff_to_str(idx.terms[k])
+        println("  ", lpad(c_str, pad), "  ", word_to_str(k))
+    end
+end
+
+function sortedprint(r::Poly{A}) where {A <: Union{Hoffman, Index}}
     if iszero(r)
-        println("Poly{$A} with no entry:")
-        println("    0")
+        println("Poly{$A} (0)")
         return
     end
 
-    number_space = 0
-    degs = sort(collect(keys(r.terms)),rev=true)
-    for (d,ch) in r.terms
-        coeffs = values(ch.terms)
-        max_coeff = maximum(t-> ndigits(t.den)+ndigits(t.num),coeffs)
-        number_space = max(max_coeff+3,number_space)
+    # Calculate padding
+    pad = 0
+    for ch in values(r.terms)
+        if !isempty(ch.terms)
+            coeffs = values(ch.terms)
+            max_len = maximum(t -> length(coeff_to_str(t)), coeffs)
+            pad = max(pad, max_len)
+        end
+    end
+    pad += 2
+
+    println("Poly{$A} with $(length(r.terms)) degree-entries:")
+    
+    degs = sort(collect(keys(r.terms)), rev=true)
+    for d in degs
+        ch = r.terms[d]
+        if iszero(ch) continue end
+        
+        println("T^$d:")
+        
+        sorted_words = if A === Hoffman
+            sort(collect(keys(ch.terms)); by = t -> (length(t), t.t))
+        else # Index
+            sort(collect(keys(ch.terms)); by = t -> (sum(t.t), t.t))
+        end
+
+        for wo in sorted_words
+            c_str = coeff_to_str(ch.terms[wo])
+            println("  ", lpad(c_str, pad), "  ", word_to_str(wo))
+        end
+    end
+end
+
+function sortedprint(r::Poly{Rational{BigInt}})
+    if iszero(r)
+        println("Poly{Rational{BigInt}} (0)")
+        return
     end
 
-    if length(r.terms) == 1
-        println("Poly{$A} with 1 entry:")
+    # Filter out zero-coefficient terms before calculating padding
+    non_zero_terms = filter(p -> !iszero(p.second), r.terms)
+    if isempty(non_zero_terms)
+        println("Poly{Rational{BigInt}} (all coefficients are zero)")
+        return
+    end
+
+    println("Poly{Rational{BigInt}} with $(length(non_zero_terms)) entries:")
+
+    degs = sort(collect(keys(non_zero_terms)), rev=true)
+
+    # Calculate padding for a neat table
+    max_deg_len = maximum(d -> length(string(d)), keys(non_zero_terms))
+    max_coeff_len = maximum(c -> length(coeff_to_str(c)), values(non_zero_terms))
+
+    deg_pad = max(max_deg_len, length("Degree"))
+    coeff_pad = max(max_coeff_len, length("Coefficient"))
+
+    # Header
+    println() # Add a blank line for spacing
+    println(rpad("Degree", deg_pad), " | ", "Coefficient")
+    println(repeat("─", deg_pad), "─┼─", repeat("─", coeff_pad))
+
+    # Body
+    for d in degs
+        coeff = r.terms[d]
+        println(rpad(string(d), deg_pad), " | ", coeff_to_str(coeff))
+    end
+end
+
+"""
+###################################################################################################
+                                        GetProperty
+###################################################################################################
+"""
+
+function getproperty(obj::Union{Hoffman, Index}, sym::Symbol)
+    if sym === :sortshow
+        sortedprint(obj)
+        return nothing
     else
-        println("Poly{$A} with $(length(r.terms)) entries:")
+        return getfield(obj, sym)
     end
+end
 
-    if A === Hoffman
-        for d in degs
-            println("T^",d,":")
-            ch = r.terms[d]
-            # Hoffman の流用
-            words = keys(ch.terms)
-            
-            sorted_word = sort(collect(words); by = t -> (length(t), t))
-    
-            for wo in sorted_word
-                c = coeff_to_str(ch.terms[wo])
-                println(lpad(c,number_space)," ",word_to_str(wo))
-            end
-        end
-    elseif A === Index
-        for d in degs
-            println("T^",d,":")
-            ch = r.terms[d]
-            # Hoffman の流用
-            words = keys(ch.terms)
-            
-            sorted_word = sort(collect(words); by = t -> (length(t), t))
-    
-            for wo in sorted_word
-                c = coeff_to_str(ch.terms[wo])
-                println(lpad(c,number_space)," ","[", join(wo,", "), "]")
-            end
-        end
+function getproperty(r::Poly, sym::Symbol)
+    if sym === :sortshow
+        sortedprint(r)
+        return nothing
+    elseif sym === :deg
+        return isempty(r.terms) ? -1 : maximum(keys(r.terms))
+    else
+        return getfield(r, sym)
+    end
+end
+
+function getproperty(w::Union{HoffmanWord, IndexWord}, sym::Symbol)
+    if sym === :tovec
+        return collect(Int, w.t)
+    else
+        return getfield(w, sym)
     end
 end
