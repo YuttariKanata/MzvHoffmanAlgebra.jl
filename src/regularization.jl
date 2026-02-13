@@ -113,7 +113,20 @@ Returns a `Poly{Index}` where the coefficient of `T^0` is the regularized value.
 function stuffle_regularization_polynomial(idx::Index; orientation::Symbol=:left)::Poly{Index}
     _regularize(idx, stuffle_product, st_index1_pow, 1, orientation)
 end
+
+"""
+    stuffle_regularization_polynomial(h::Hoffman; orientation::Symbol=:left) -> Poly{Hoffman}
+
+Calculates the regularization polynomial of `h` with respect to the stuffle product.
+Converts to Index, computes the polynomial, and converts back to Poly{Hoffman}.
+"""
+function stuffle_regularization_polynomial(h::Hoffman; orientation::Symbol=:left)::Poly{Hoffman}
+    idx = Index(h, orientation=orientation)
+    poly_i = stuffle_regularization_polynomial(idx, orientation=orientation)
+    return Poly{Hoffman}(poly_i, orientation=orientation)
+end
 stuffle_regularization_polynomial(w::IndexWord; orientation::Symbol=:left) = stuffle_regularization_polynomial(Index(w), orientation=orientation)
+stuffle_regularization_polynomial(w::HoffmanWord; orientation::Symbol=:left) = stuffle_regularization_polynomial(Hoffman(w), orientation=orientation)
 
 """
     shuffle_regularization_polynomial(x; orientation::Symbol=:left)
@@ -125,7 +138,20 @@ Returns a `Poly{Hoffman}` where the coefficient of `T^0` is the regularized valu
 function shuffle_regularization_polynomial(h::Hoffman; orientation::Symbol=:left)::Poly{Hoffman}
     _regularize(h, shuffle_product, sh_y_pow, 1, orientation)
 end
+
+"""
+    shuffle_regularization_polynomial(idx::Index; orientation::Symbol=:left) -> Poly{Index}
+
+Calculates the regularization polynomial of `idx` with respect to the shuffle product.
+Converts to Hoffman, computes the polynomial, and converts back to Poly{Index}.
+"""
+function shuffle_regularization_polynomial(idx::Index; orientation::Symbol=:left)::Poly{Index}
+    h = Hoffman(idx, orientation=orientation)
+    poly_h = shuffle_regularization_polynomial(h, orientation=orientation)
+    return Poly{Index}(poly_h, orientation=orientation)
+end
 shuffle_regularization_polynomial(w::HoffmanWord; orientation::Symbol=:left) = shuffle_regularization_polynomial(Hoffman(w), orientation=orientation)
+shuffle_regularization_polynomial(w::IndexWord; orientation::Symbol=:left) = shuffle_regularization_polynomial(Index(w), orientation=orientation)
 
 """
     reg_st(x; orientation::Symbol=:left)
@@ -134,6 +160,7 @@ Returns the constant term of the stuffle regularization polynomial of `x`.
 This is the "finite part" or "regularized value" with respect to the stuffle product.
 """
 reg_st(x::Union{Index, IndexWord}; kw...) = get(stuffle_regularization_polynomial(x; kw...).terms, 0, zero(Index))
+reg_st(h::Union{Hoffman, HoffmanWord}; kw...) = Index(reg_st(Index(h;kw... )); kw... )
 
 """
     reg_sh(x; orientation::Symbol=:left)
@@ -142,6 +169,7 @@ Returns the constant term of the shuffle regularization polynomial of `x`.
 This is the "finite part" or "regularized value" with respect to the shuffle product.
 """
 reg_sh(x::Union{Hoffman, HoffmanWord}; kw...) = get(shuffle_regularization_polynomial(x; kw...).terms, 0, zero(Hoffman))
+reg_sh(x::Union{Index, IndexWord}; kw...) = Hoffman(reg_sh(Hoffman(x; kw...)); kw...)
 
 """
 ###################################################################################################

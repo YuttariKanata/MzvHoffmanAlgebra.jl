@@ -33,6 +33,7 @@ function shuffle_product(a::Hoffman, b::Hoffman; kw...)::Hoffman
     return Hoffman(new_terms)
 end
 
+
 """
     shuffle_product(a::Index, b::Index; orientation::Symbol=:left)
 
@@ -80,8 +81,15 @@ function stuffle_product(a::Index, b::Index; kw...)::Index
     return Index(new_terms)
 end
 
+function stuffle_product(a::Hoffman, b::Hoffman; orientation::Symbol=:left)::Hoffman
+    ia = Index(a, orientation=orientation)
+    ib = Index(b, orientation=orientation)
+    i_res = stuffle_product(ia, ib)
+    return Hoffman(i_res, orientation=orientation)
+end
+
 """
-    star_stuffle_product(a::Index, b::Index)
+    star_stuffle_product(a::Index, b::Index; orientation::Symbol=:left)
     star_stuffle_product(a::Hoffman, b::Hoffman; orientation::Symbol=:left)
 
 Computes the star-stuffle product of two elements.
@@ -115,21 +123,22 @@ function star_stuffle_product(a::Index, b::Index; kw...)::Index
     return Index(new_terms)
 end
 
-# Wrappers for cross-type products
-# Note: shuffle_product(Index, Index) is already defined above with optimization.
-
-function stuffle_product(a::Hoffman, b::Hoffman; orientation::Symbol=:left)::Hoffman
-    ia = Index(a, orientation=orientation)
-    ib = Index(b, orientation=orientation)
-    i_res = stuffle_product(ia, ib)
-    return Hoffman(i_res, orientation=orientation)
-end
-
 function star_stuffle_product(a::Hoffman, b::Hoffman; orientation::Symbol=:left)::Hoffman
     ia = Index(a, orientation=orientation)
     ib = Index(b, orientation=orientation)
     i_res = star_stuffle_product(ia, ib)
     return Hoffman(i_res, orientation=orientation)
+end
+
+for op in [:(shuffle_product), :(stuffle_product), :(star_stuffle_product)]
+    @eval begin
+        $op(a::Hoffman, b::HoffmanWord; kw...)     = $op(Hoffman(a), Hoffman(b); kw...)
+        $op(a::HoffmanWord, b::Hoffman; kw...)     = $op(Hoffman(a), Hoffman(b); kw...)
+        $op(a::HoffmanWord, b::HoffmanWord; kw...) = $op(Hoffman(a), Hoffman(b); kw...)
+        $op(a::Index, b::IndexWord; kw...)         = $op(Index(a), Index(b); kw...)
+        $op(a::IndexWord, b::Index; kw...)         = $op(Index(a), Index(b); kw...)
+        $op(a::IndexWord, b::IndexWord; kw...)     = $op(Index(a), Index(b); kw...)
+    end
 end
 
 # Squaring optimizations (Internal use)
@@ -161,6 +170,10 @@ function shuffle_square(a::Hoffman)::Hoffman
     return Hoffman(new_terms)
 end
 
+function shuffle_square(a::Index; kw...)::Index
+    return shuffle_product(a,a)
+end
+
 function stuffle_square(a::Index)::Index
     new_terms = Dict{IndexWord, Rational{BigInt}}()
     terms = collect(a.terms)
@@ -185,7 +198,13 @@ function stuffle_square(a::Index)::Index
     return Index(new_terms)
 end
 
-function star_stuffle_square(a::Index)::Index
+function stuffle_square(a::Hoffman; orientation::Symbol=:left)::Hoffman
+    ia = Index(a, orientation=orientation)
+    i_res = stuffle_square(ia)
+    return Hoffman(i_res, orientation=orientation)
+end
+
+function star_stuffle_square(a::Index; kw...)::Index
     # Similar logic to star_stuffle_product but optimized for square
     # Since we don't have a specialized monomial_st_star, we use the product logic with square optimization loops.
     new_terms = Dict{IndexWord, Rational{BigInt}}()
@@ -219,21 +238,17 @@ function star_stuffle_square(a::Index)::Index
     return Index(new_terms)
 end
 
-# Wrappers for squaring
-function shuffle_square(a::Index; kw...)::Index
-    return shuffle_product(a,a)
-end
-
-function stuffle_square(a::Hoffman; orientation::Symbol=:left)::Hoffman
-    ia = Index(a, orientation=orientation)
-    i_res = stuffle_square(ia)
-    return Hoffman(i_res, orientation=orientation)
-end
-
 function star_stuffle_square(a::Hoffman; orientation::Symbol=:left)::Hoffman
     ia = Index(a, orientation=orientation)
     i_res = star_stuffle_square(ia)
     return Hoffman(i_res, orientation=orientation)
+end
+
+for op in [:(shuffle_square), :(stuffle_square), :(star_stuffle_square)]
+    @eval begin
+        $op(a::HoffmanWord; kw...) = $op(Hoffman(a); kw...)
+        $op(a::IndexWord; kw...) = $op(Index(a); kw...)
+    end
 end
 
 # Power functions (Binary Exponentiation)
@@ -347,6 +362,14 @@ function star_stuffle_pow(a::Hoffman, n::Integer; orientation::Symbol=:left)
         return _iter_pow(a, n, op)
     end
     _bin_pow(a, n, op, sq_op)
+end
+
+for op in [:(shuffle_pow), :(stuffle_pow), :(star_stuffle_pow)]
+    @eval begin
+        $op(a::HoffmanWord, n::Integer; kw...) = $op(Hoffman(a), n; kw...)
+        $op(a::IndexWord, n::Integer; kw...) = $op(Index(a), n; kw...)
+    end
+    
 end
 
 """

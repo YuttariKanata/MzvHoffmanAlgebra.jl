@@ -104,6 +104,8 @@ function dual(idx::Index; orientation::Symbol=:left)::Index
     end
     return Index(new_terms)
 end
+dual(w::HoffmanWord; kw...)::HoffmanWord = monomial_dual(w; kw...)
+dual(w::IndexWord; kw...)::IndexWord = monomial_dual(w; kw...)
 
 # Hoffman Dual (Automorphism)
 # Preserves y at start (left) or end (right), swaps rest x <-> y.
@@ -147,6 +149,8 @@ function Hoffman_dual(idx::Index; orientation::Symbol=:left)::Index
     # apply the well-defined dual there, and convert back.
     return Index(Hoffman_dual(Hoffman(idx; orientation=orientation); orientation=orientation); orientation=orientation)
 end
+Hoffman_dual(w::HoffmanWord; kw...)::HoffmanWord = monomial_hof_dual(w; kw...)
+Hoffman_dual(w::IndexWord; kw...)::IndexWord = monomial_hof_dual(w; kw...)
 
 # Landen Dual
 function monomial_Landen(w::HoffmanWord; orientation::Symbol=:left)::Hoffman
@@ -193,6 +197,8 @@ function Landen_dual(h::Hoffman; orientation::Symbol=:left)::Hoffman
     return s
 end
 Landen_dual(idx::Index; orientation::Symbol=:left)::Index = Index(Landen_dual(Hoffman(idx, orientation=orientation); orientation=orientation))
+Landen_dual(w::HoffmanWord; kw...)::Hoffman = monomial_Landen(w; kw...)
+Landen_dual(w::IndexWord; kw...)::Index = Index(monomial_Landen(HoffmanWord(w); kw...))
 
 # Star-word to word
 function monomial_star_map(w::HoffmanWord; orientation::Symbol=:left)::Hoffman
@@ -248,3 +254,5 @@ function starword_to_word(i::Index; orientation::Symbol=:left)::Index
     h_res = starword_to_word(h, orientation=orientation)
     return Index(h_res, orientation=orientation)
 end
+starword_to_word(w::HoffmanWord; kw...)::Hoffman = monomial_star_map(w; kw...)
+starword_to_word(w::IndexWord; kw...)::Index = Index(monomial_star_map(HoffmanWord(w); kw...))

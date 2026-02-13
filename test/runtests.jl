@@ -1,5 +1,4 @@
 using Test
-using Random
 using MzvHoffmanAlgebra
 
 include("test_datas.jl")
@@ -304,7 +303,6 @@ end
     # Heavy Random Tests
     # ==========================================
     @testset "Heavy Random Tests" begin
-        Random.seed!(42) # Ensure reproducibility
 
         @testset "1. Hoffman Algebra Laws (Stress Test)" begin
             for i in 1:100
@@ -506,7 +504,6 @@ end
     end
 
     @testset "13. Advanced Consistency & Robustness" begin
-        Random.seed!(1234)
         
         # Access internal functions for testing
         mod = MzvHoffmanAlgebra

@@ -87,24 +87,18 @@ end
 -(a::IndexWord, b::IndexWord) = Index(a) - Index(b)
 
 # Mixed types with promote (excluding NN+NN which is Base)
-+(a::Hoffman, b::HoffmanWord) = +(promote(a,b)...)
-+(a::HoffmanWord, b::Hoffman) = +(promote(a,b)...)
--(a::Hoffman, b::HoffmanWord) = -(promote(a,b)...)
--(a::HoffmanWord, b::Hoffman) = -(promote(a,b)...)
-+(a::Index, b::IndexWord) = +(promote(a,b)...)
-+(a::IndexWord, b::Index) = +(promote(a,b)...)
--(a::Index, b::IndexWord) = -(promote(a,b)...)
--(a::IndexWord, b::Index) = -(promote(a,b)...)
-
-+(a::Union{Hoffman, HoffmanWord}, b::NN) = +(promote(a,b)...)
-+(a::NN, b::Union{Hoffman, HoffmanWord}) = +(promote(a,b)...)
--(a::Union{Hoffman, HoffmanWord}, b::NN) = -(promote(a,b)...)
--(a::NN, b::Union{Hoffman, HoffmanWord}) = -(promote(a,b)...)
-
-+(a::Union{Index, IndexWord}, b::NN) = +(promote(a,b)...)
-+(a::NN, b::Union{Index, IndexWord}) = +(promote(a,b)...)
--(a::Union{Index, IndexWord}, b::NN) = -(promote(a,b)...)
--(a::NN, b::Union{Index, IndexWord}) = -(promote(a,b)...)
+for op in [:(+), :(-)]
+    @eval begin
+        $op(a::Hoffman, b::HoffmanWord) = $op(promote(a,b)...)
+        $op(a::HoffmanWord, b::Hoffman) = $op(promote(a,b)...)
+        $op(a::Index, b::IndexWord) = $op(promote(a,b)...)
+        $op(a::IndexWord, b::Index) = $op(promote(a,b)...)
+        $op(a::NN, b::Union{Hoffman, HoffmanWord}) = $op(promote(a,b)...)
+        $op(a::Union{Hoffman, HoffmanWord}, b::NN) = $op(promote(a,b)...)
+        $op(a::NN, b::Union{Index, IndexWord}) = $op(promote(a,b)...)
+        $op(a::Union{Index, IndexWord}, b::NN) = $op(promote(a,b)...)
+    end
+end
 
 # Unified Hoffman/Index Addition
 function +(a::T, b::T)::T where T <: Union{Hoffman, Index}

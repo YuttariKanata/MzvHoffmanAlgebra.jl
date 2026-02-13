@@ -57,3 +57,5 @@ function dell(h::Hoffman, n::Int; orientation::Symbol=:left)::Hoffman
 end
 
 dell(idx::Index, n::Int; orientation::Symbol=:left)::Index = Index(dell(Hoffman(idx; orientation=orientation), n; orientation=orientation); orientation=orientation)
+dell(w::HoffmanWord, n::Int; kw...)::Hoffman = dell(Hoffman(w), n; kw...)
+dell(w::IndexWord, n::Int; kw...)::Index = Index(dell(Hoffman(w), n; kw...))
