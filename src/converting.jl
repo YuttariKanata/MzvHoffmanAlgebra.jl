@@ -88,13 +88,16 @@ function IndexWord(w::Hoffman; orientation::Symbol = :left)::IndexWord
     return IndexWord(first(keys(w)); orientation=orientation)
 end
 function IndexWord(w::HoffmanWord; orientation::Symbol = :left)::IndexWord
+    if isempty(w)
+        return IndexWord()
+    end
     if orientation === :left # z_k = y*x^{k-1}
-        if isempty(w) || w[1] != 1 # yに対応するだけ
+        if w[1] != 1 # yに対応するだけ
             throw(DomainError(w,"w does not start with y"))
         end
         return IndexWord(idxprs(w))
     elseif orientation === :right # z_k = x^{k-1}*y
-        if isempty(w) || w[end] != 1
+        if w[end] != 1
             throw(DomainError(w,"w does not end with y"))
         end
         return IndexWord(idxprs_r(w))
