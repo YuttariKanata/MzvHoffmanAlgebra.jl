@@ -160,7 +160,7 @@ Returns the constant term of the stuffle regularization polynomial of `x`.
 This is the "finite part" or "regularized value" with respect to the stuffle product.
 """
 reg_st(x::Union{Index, IndexWord}; kw...) = get(stuffle_regularization_polynomial(x; kw...).terms, 0, zero(Index))
-reg_st(h::Union{Hoffman, HoffmanWord}; kw...) = Index(reg_st(Index(h;kw... )); kw... )
+reg_st(h::Union{Hoffman, HoffmanWord}; kw...) = Hoffman(reg_st(Index(h;kw... )); kw... )
 
 """
     reg_sh(x; orientation::Symbol=:left)
@@ -169,7 +169,7 @@ Returns the constant term of the shuffle regularization polynomial of `x`.
 This is the "finite part" or "regularized value" with respect to the shuffle product.
 """
 reg_sh(x::Union{Hoffman, HoffmanWord}; kw...) = get(shuffle_regularization_polynomial(x; kw...).terms, 0, zero(Hoffman))
-reg_sh(x::Union{Index, IndexWord}; kw...) = Hoffman(reg_sh(Hoffman(x; kw...)); kw...)
+reg_sh(x::Union{Index, IndexWord}; kw...) = Index(reg_sh(Hoffman(x; kw...)); kw...)
 
 """
 ###################################################################################################
