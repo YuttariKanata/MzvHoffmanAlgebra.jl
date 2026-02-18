@@ -64,7 +64,7 @@ export shuffle_product, stuffle_product, star_stuffle_product,
        st_index1_pow, sh_y_pow
 
        # regularization.jl
-export reg_st, reg_sh, stuffle_regularization_polynomial, shuffle_regularization_polynomial, rho, rho_t
+export stuffle_regularization, shuffle_regularization, stuffle_regularization_polynomial, shuffle_regularization_polynomial, rho, rho_t
 
        # duals.jl
 export dual, Hoffman_dual, Landen_dual,
