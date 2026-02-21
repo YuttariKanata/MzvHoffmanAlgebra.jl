@@ -22,7 +22,6 @@ The shift operator is defined on the admissible Hoffman algebra (words of 0 and 
 For `Index` elements, they are converted to `Hoffman` elements based on the `orientation`, multiplied, and converted back.
 """
 
-<<<<<<< HEAD
 function monomial_shift(w::HoffmanWord; t=0//1::Rational{BigInt})
     k = HoffmanWord(w.t[2:end])
     return y*Hoffman_hom(k, [x, t*x + y])
@@ -80,8 +79,3 @@ end
 
 sharp_shift(kk::HoffmanWord) = monomial_sharp_shift(kk)
 sharp_shift(kk::IndexWord) = monomial_sharp_shift(kk)
-=======
-function monomial_shift(w::HoffmanWord; t=1::Rational{BigInt})
-
-end
->>>>>>> 5b87c107c1f26813f34c5bc508099b8692c49184
