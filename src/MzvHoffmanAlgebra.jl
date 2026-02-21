@@ -79,6 +79,9 @@ export sortedprint, upper_represent
        # operators.jl
 export left_act, right_act, ⬆️, ➡️, ⬇️, ⬅️, ➖, up, right, down, left, minus, τ, 𖼷, η, ⋁, φ, ∂,
        WordtoOperator
+
+       # interporation.jl
+export shift, sharp_shift
 ;
 
 
