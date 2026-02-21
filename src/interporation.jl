@@ -9,7 +9,6 @@
 """
 
 """
-<<<<<<< HEAD
     shift(w::Hoffman; t=0::Rational{BigInt})::Hoffman
     shift(idx::Index; t=0::Rational{BigInt})::Index
 =======
