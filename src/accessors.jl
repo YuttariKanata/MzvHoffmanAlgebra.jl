@@ -169,7 +169,7 @@ function _show_linear_combination(io::IO, obj::Union{Hoffman, Index})
         elseif is_empty_word
             print(io, coeff_to_str(coeff))
         else
-            print(io, coeff_to_str(coeff), is_unity ? "" : " ", word_s)
+            print(io, coeff_to_str(coeff), is_unity ? "" : "*", word_s)
         end
     end
 end
