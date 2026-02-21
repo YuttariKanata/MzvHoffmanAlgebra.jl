@@ -11,11 +11,7 @@
 """
     shift(w::Hoffman; t=0::Rational{BigInt})::Hoffman
     shift(idx::Index; t=0::Rational{BigInt})::Index
-=======
-    shift(w::Hoffman; t=1::Rational{BigInt})
-    shift(w::Index; t=1::Rational{BigInt})
->>>>>>> 5b87c107c1f26813f34c5bc508099b8692c49184
-
+    
 Computes shift operator S^t(w) of one element.
 The shift operator is defined on the admissible Hoffman algebra (words of 0 and 1).
 For `Index` elements, they are converted to `Hoffman` elements based on the `orientation`, multiplied, and converted back.
