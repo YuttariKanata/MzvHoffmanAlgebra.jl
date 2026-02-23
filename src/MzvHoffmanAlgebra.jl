@@ -1,5 +1,61 @@
 module MzvHoffmanAlgebra
 
+using REPL
+using Dates
+
+
+# モジュールのメインコンテンツ...
+
+function __init__()
+    # REPLがインタラクティブな場合のみ表示（スクリプト実行時は邪魔にならないように）
+    if isinteractive() && Base.get(stdout, :color, false)
+        print_banner()
+    end
+end
+
+function print_banner()
+    # 81 (Light Cyan) -> 76 (Spring Green)
+    start_color = 81
+    end_color = 76
+    
+    # ASCII Art の作成（Hoffmanの 'H' や MZV を意識したデザイン）
+    # ここでは数学的な「重み」や「深さ」をイメージした抽象的なデザインにしている
+    logo = raw"""
+     __  _________    __     _    _        __  __                       
+    |  \/ /___\ \/   / /    | |  | |      / _|/ _|                      
+    | \  / |  /\ \  / /_____| |__| | ___ | |_| |_ _ __ ___   __ _ _ __ 
+    | |\/| | / /\ \/ /______|  __  |/ _ \|  _|  _| '_ ` _ \ / _` | '_ \ 
+    | |  | |/ /__\_ /       | |  | | (_) | | | | | | | | | | (_| | | | |
+    |_|  |_/______//        |_|  |_|\___/|_| |_| |_| |_| |_|\__,_|_| |_|
+    
+    """
+    
+    # 1行ずつ装飾して出力
+    lines = split(logo, '\n')
+    println()
+    for line in lines
+        isempty(line) && continue
+        len = length(line)
+        for (i, char) in enumerate(line)
+            # 線形補間で色を決定 (i=1 で 81, i=len で 76)
+            # 数値が減る方向なので max(76, 81 - ...) で制御
+            t = (i - 1) / (len > 1 ? len - 1 : 1)
+            c = round(Int, start_color + t * (end_color - start_color))
+            
+            printstyled(char, color=c, bold=true)
+        end
+        println()
+    end
+    println()
+    printstyled("  ", ">>> Multiple Zeta Values & Hoffman Algebra Package\n\n", color=:white)
+
+    printstyled("  GitHub: https://github.com/YuttariKanata/MzvHoffmanAlgebra.jl\n\n", color=248)
+
+    # バージョン情報や更新日の表示（任意）
+    printstyled("  $(rpad(string(pkgversion(MzvHoffmanAlgebra)),10)) | $(today()) | Happy Computing with MZVs!\n", color=:light_black)
+    println("-"^70)
+end
+
 
 #########################################################
 ########## Operator System ##############################
