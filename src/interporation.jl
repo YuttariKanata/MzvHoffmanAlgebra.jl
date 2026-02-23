@@ -17,17 +17,20 @@ The shift operator is defined on the admissible Hoffman algebra (words of 0 and 
 For `Index` elements, they are converted to `Hoffman` elements based on the `orientation`, multiplied, and converted back.
 """
 
-function monomial_shift(w::HoffmanWord; t::Rational{BigInt} = zero(Rational{BigInt}))
+function monomial_shift(w::HoffmanWord; t=0)
+    t = big(t)//1
     k = HoffmanWord(w.t[2:end])
     return y*Hoffman_hom(k, [x, t*x + y])
 end
 
-function monomial_shift(w::IndexWord; t::Rational{BigInt} = zero(Rational{BigInt}))
+function monomial_shift(w::IndexWord; t=0)
+    t = big(t)//1
     k = HoffmanWord(HoffmanWord(w).t[2:end])
     return Index(y*Hoffman_hom(k, [x, t*x + y]))
 end
 
-function shift(w::Hoffman; t::Rational{BigInt} = zero(Rational{BigInt}))
+function shift(w::Hoffman; t=0)
+    t = big(t)//1
     ans = zero(Hoffman)
     for (h, c) in w.terms
         hd = c*monomial_shift(h; t=t)
@@ -36,10 +39,9 @@ function shift(w::Hoffman; t::Rational{BigInt} = zero(Rational{BigInt}))
     return ans
 end
 
-shift(w::HoffmanWord; t::Rational{BigInt} = zero(Rational{BigInt})) = monomial_shift(w; t=t)
-shift(idx::Index; t::Rational{BigInt} = zero(Rational{BigInt})) = Index(shift(Hoffman(idx); t=t))
-shift(idx::IndexWord; t::Rational{BigInt} = zero(Rational{BigInt})) = monomial_shift(idx; t=t)
-shift(idx, t::Int=0) = shift(idx, t=big(t))
+shift(w::HoffmanWord; t=0) = monomial_shift(w; t=t)
+shift(idx::Index; t=0) = Index(shift(Hoffman(idx); t=t))
+shift(idx::IndexWord; t=0) = monomial_shift(idx; t=t)
 
 """
     sharp_shift(w::Hoffman)
