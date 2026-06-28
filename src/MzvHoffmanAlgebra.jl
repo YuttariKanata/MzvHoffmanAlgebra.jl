@@ -6,7 +6,7 @@ using Dates
 
 # モジュールのメインコンテンツ...
 
-function __init__()
+function __init__()  # moduleが読み込まれた後に最初に実行される特別な関数
     # REPLがインタラクティブな場合のみ表示（スクリプト実行時は邪魔にならないように）
     if isinteractive() && Base.get(stdout, :color, false)
         print_banner()
@@ -55,6 +55,7 @@ function print_banner()
     printstyled("  $(rpad(string(pkgversion(MzvHoffmanAlgebra)),10)) | $(today()) | Happy Computing with MZVs!\n", color=:light_black)
     println("-"^70)
 end
+
 
 
 #########################################################
@@ -141,6 +142,7 @@ export shift, sharp_shift
 ;
 
 
+include("mathcore.jl")
 include("types.jl")
 include("basefunctions.jl")
 include("converting.jl")
@@ -153,5 +155,7 @@ include("derivations.jl")
 include("accessors.jl")
 include("operators.jl")
 include("interporation.jl")
+include("calc.jl")
+
 
 end
